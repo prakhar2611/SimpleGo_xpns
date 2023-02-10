@@ -1,7 +1,7 @@
 package Services
 
 import (
-	"ExpenseTracker/Utilities"
+	"SimpleGo_xpns/Utilities"
 	"context"
 	"fmt"
 	"net/http"

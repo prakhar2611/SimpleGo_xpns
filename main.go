@@ -1,9 +1,9 @@
 package main
 
 import (
-	service "ExpenseTracker/Services"
-	utilities "ExpenseTracker/Utilities"
-	controller "Expensetracker/Controllers"
+	Controller "SimpleGo_xpns/Controllers"
+	service "SimpleGo_xpns/Services"
+	utilities "SimpleGo_xpns/Utilities"
 	"flag"
 	"fmt"
 	"log"
@@ -26,7 +26,8 @@ func main() {
 
 	//Registering all the routes for the applications
 	r.Route("/Expense", func(r chi.Router) {
-		controller.RegisterUserAPI(r)
+		Controller.RegisterUserAPI(r)
+		Controller.RegisterDataAPI(r)
 	})
 	r.Route("/", func(r chi.Router) {
 		service.RegisterGoogleAPIs(r)

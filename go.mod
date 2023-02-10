@@ -1,4 +1,4 @@
-module main
+module SimpleGo_xpns.go
 
 go 1.18
 
@@ -7,12 +7,13 @@ require (
 	github.com/gorilla/sessions v1.2.1
 	github.com/knadh/koanf v1.4.2
 	github.com/markbates/goth v1.73.0
+	github.com/unrolled/render v1.5.0
 	go.mongodb.org/mongo-driver v1.10.1
 )
 
 require (
 	cloud.google.com/go v0.67.0 // indirect
-	github.com/fsnotify/fsnotify v1.4.9 // indirect
+	github.com/fsnotify/fsnotify v1.5.4 // indirect
 	github.com/golang/protobuf v1.4.2 // indirect
 	github.com/golang/snappy v0.0.1 // indirect
 	github.com/gorilla/context v1.1.1 // indirect
@@ -32,7 +33,7 @@ require (
 	golang.org/x/net v0.0.0-20211112202133-69e39bad7dc2 // indirect
 	golang.org/x/oauth2 v0.0.0-20200902213428-5d25da1a8d43 // indirect
 	golang.org/x/sync v0.0.0-20210220032951-036812b2e83c // indirect
-	golang.org/x/sys v0.0.0-20210615035016-665e8c7367d1 // indirect
+	golang.org/x/sys v0.0.0-20220615213510-4f61da869c0c // indirect
 	golang.org/x/text v0.3.7 // indirect
 	google.golang.org/appengine v1.6.6 // indirect
 	google.golang.org/protobuf v1.25.0 // indirect
