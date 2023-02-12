@@ -18,7 +18,7 @@ func main() {
 	fmt.Println("Hello world !")
 	// utilities.ConnectDB()
 
-	utilities.Loadconfig()
+	utilities.Load()
 
 	fmt.Println("Application running on port", *port)
 

@@ -11,11 +11,12 @@ import (
 
 	"SimpleGo_xpns.go/Utilities"
 	"github.com/360EntSecGroup-Skylar/excelize"
+	"github.com/spf13/viper"
 )
 
 func SBIparser(FileName string) Model.PayloadToMongo {
 	var req Model.PayloadToMongo
-	k := Utilities.GetKaonf()
+	//k := Utilities.GetKaonf()
 
 	f, err := excelize.OpenFile(FileName)
 	if err != nil {
@@ -28,12 +29,15 @@ func SBIparser(FileName string) Model.PayloadToMongo {
 		log.Fatalln(err)
 	}
 
-	sheetPreOffset := k.String("SBISheetOffset")
+	sheetPreOffset := viper.Get("SBISheetOffset")
 	var i int
 	if sheetPreOffset == "" {
 		i = 20
 	} else {
-		i, _ = strconv.Atoi(sheetPreOffset)
+		d, e := sheetPreOffset.(float64)
+		if e {
+			i = int(d)
+		}
 	}
 
 	r := rows[i : len(rows)-2]
