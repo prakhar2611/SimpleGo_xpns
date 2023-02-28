@@ -9,7 +9,7 @@ import (
 
 func RegisterUserAPI(r chi.Router) {
 	r.Get("/api/User/v1/GetUser", GetUserDetails)
-	r.Handle("/api/testuser", http.HandlerFunc(TestUser))
+	r.Post("/api/User/v1/Signin", SignIn)
 }
 
 func GetUserDetails(w http.ResponseWriter, r *http.Request) {
@@ -17,6 +17,7 @@ func GetUserDetails(w http.ResponseWriter, r *http.Request) {
 	//d := UserModel.User{}
 }
 
-func TestUser(w http.ResponseWriter, r *http.Request) {
+func SignIn(w http.ResponseWriter, r *http.Request) {
 	fmt.Println("the server is running fine in local host")
+
 }

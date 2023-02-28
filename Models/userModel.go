@@ -1,8 +1,18 @@
 package Models
 
+import "gorm.io/gorm"
+
 type User struct {
-	FirstName string `json:"firstName"`
-	LastName  string `json:"lastName"`
-	Email     string `json:"email"`
-	Address   string `json:"address"`
+	gorm.Model
+	UserId    uint32 `gorm:"primaryKey;autoIncrement:true"`
+	FirstName string
+	LastName  string
+	Email     string
+	Address   string
+}
+
+type UserToken struct {
+	gorm.Model
+	User  User `gorm:"foreignKey:UserId"`
+	Token string
 }

@@ -11,9 +11,9 @@ import (
 )
 
 func RegisterDataAPI(r chi.Router) {
-	//r.Post("/api/User/v1/SendData", SendToMongo)
-	//r.Get("/api/User/v1/GetExpense", GetXpns)
-	r.Post("/api/User/v1/ImportFromFile", ImportFormFile)
+	//r.Post("/api/User/v1/SendData", SendToMongo) not using it for external use, same is implemented in the workflow check there
+	//r.Get("/api/v1/GetExpense", GetXpns)
+	r.Post("/api/v1/ImportFromFile", ImportFormFile)
 }
 
 // func SendToMongo(w http.ResponseWriter, r *http.Request) {
@@ -44,6 +44,7 @@ func RegisterDataAPI(r chi.Router) {
 
 // }
 
+//need to checck this fuction flow
 // func GetXpns(w http.ResponseWriter, r *http.Request) {
 // 	var userId string
 // 	var res Model.PayloadToMongo
