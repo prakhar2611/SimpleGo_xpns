@@ -1,18 +1,28 @@
 package Models
 
-import "gorm.io/gorm"
+import (
+	"time"
 
-type User struct {
-	gorm.Model
-	UserId    uint32 `gorm:"primaryKey;autoIncrement:true"`
-	FirstName string
-	LastName  string
-	Email     string
-	Address   string
-}
+	"gorm.io/gorm"
+)
 
 type UserToken struct {
 	gorm.Model
-	User  User `gorm:"foreignKey:UserId"`
-	Token string
+	ID           string `gorm:"primaryKey;unique"`
+	AccessToken  string
+	TokenType    string
+	RefreshToken string
+	Expiry       time.Time
+}
+
+type User struct {
+	gorm.Model
+	ID        string `gorm:"nullable"`
+	Email     string `gorm:"index;unique"`
+	Name      string
+	Picture   string
+	Locale    string
+	Address   string
+	CreatedAt time.Time
+	UpdatedAt time.Time
 }

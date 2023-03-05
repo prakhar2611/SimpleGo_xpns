@@ -11,6 +11,13 @@
         "clientSecret" : "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",
         "callbackUrl" : "http://localhost:9005/auth/callback?provider=google"
     },
+    "Postgresql" : 
+    {
+        "host" : "xpnsdb1.cvatnnmljapj.ap-southeast-1.rds.amazonaws.com",
+        "userName" : "mahatma",
+        "password" : "hoepicker",
+        "dbName" :  "xpnsdb"
+    },
     "SBISheetOffset" : 20,
     "test" : ",ms,msa"
 }
