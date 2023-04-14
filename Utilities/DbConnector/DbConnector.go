@@ -4,8 +4,11 @@ import (
 	"fmt"
 	"time"
 
-	"SimpleGo_xpns.go/Models"
+	"SimpleGo_xpns/Models"
+	"SimpleGo_xpns/Utilities"
+
 	"github.com/spf13/viper"
+	"golang.org/x/oauth2"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 )
@@ -28,12 +31,11 @@ func GetDbConnection() bool {
 			return false
 		} else {
 			db = dbInstance
-			db.AutoMigrate(&Models.User{}, &Models.UserToken{})
+			db.AutoMigrate(&Models.User{}, &Models.UserToken{}, &Models.GmailExcelThreadSnapShot{}, &Models.ExpenseBO{})
 			return true
 		}
 	}
 	return true
-
 }
 
 func InsertUserData(user Models.User, token Models.UserToken) bool {
@@ -86,6 +88,43 @@ func UpdateAuthToken(user Models.User, token Models.UserToken) bool {
 	return false
 }
 
+func GetUserToken(token string) *oauth2.Token {
+	var t *oauth2.Token
+	var y Models.UserToken
+	if GetDbConnection() {
+		resp := db.Where("access_token = ?", token).First(&y)
+		if resp.RowsAffected > 0 {
+			t = Utilities.MapToken(y)
+		}
+	}
+	return t
+}
+func GetlastHistoryByLabel(label string) string {
+	if GetDbConnection() {
+		var snapShot Models.GmailExcelThreadSnapShot
+		resp := db.Where("label = ?", label).First(&snapShot)
+		if resp != nil && resp.RowsAffected > 0 {
+			return snapShot.LastHistoryId
+		} else if resp.RowsAffected == 0 {
+			return ""
+		}
+	}
+	return ""
+}
+
+func SendDataToPostgres(req []Models.ExpenseBO) bool {
+	if GetDbConnection() {
+		resp := db.Create(&req)
+		if resp != nil && resp.RowsAffected > 0 {
+			return true
+		} else {
+			fmt.Printf("Getting error while inserting err : %v", resp.Error.Error())
+			return false
+		}
+	}
+	return false
+}
+
 // func InsertUserData(user *Models.User) bool {
 // 	if GetDbConnection() {
 // 		var dbUser Models.User
@@ -110,6 +149,7 @@ func UpdateAuthToken(user Models.User, token Models.UserToken) bool {
 // 	return false
 // }
 
+//not using it currently
 func Migrate(m interface{}) {
 
 	//d.db.DropTable(&models.UserAuth{})
