@@ -2,6 +2,7 @@ package Workflows
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"io"
 	"log"
@@ -11,6 +12,7 @@ import (
 
 	Model "SimpleGo_xpns/Models"
 	"SimpleGo_xpns/Utilities"
+	Executer "SimpleGo_xpns/Utilities/APIExecuter"
 	dbConnector "SimpleGo_xpns/Utilities/DbConnector"
 
 	"github.com/360EntSecGroup-Skylar/excelize"
@@ -91,7 +93,7 @@ func SBIparser(FileName string, userid string, str io.Reader) []Model.ExpenseBO 
 				expense.ToAccount = strings.ToUpper(strings.TrimSpace(description[5]))
 				expense.Info = description[6]
 			} else {
-				expense.Info = row[Utilities.Description]
+				expense.TxnId = row[Utilities.Description]
 			}
 
 			bal, _ := strconv.ParseFloat(row[Utilities.Balance], 32)
@@ -104,6 +106,25 @@ func SBIparser(FileName string, userid string, str io.Reader) []Model.ExpenseBO 
 
 	}
 	return req
+}
+
+func GetDataForbase64(payload []Model.GetEncodedDataReq) []*Model.B64decodedResponse {
+	var req Executer.APIRequest
+
+	req.BaseURL = viper.Get("internalService").(string)
+	req.Action = fmt.Sprintf("/api/v1/decode/")
+	headers := make(map[string]string)
+	headers["Content-Type"] = "application/json"
+	req.Headers = headers
+	resp := Executer.POST(req, payload)
+	if resp.Status == 200 {
+		var data []*Model.B64decodedResponse
+		err := json.Unmarshal([]byte(resp.Response), &data)
+		if err == nil {
+			return data
+		}
+	}
+	return nil
 }
 
 func SendToMongo(payload Model.PayloadToMongo) bool {

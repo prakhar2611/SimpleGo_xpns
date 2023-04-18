@@ -25,12 +25,12 @@ func main() {
 	r := chi.NewRouter()
 
 	//Registering all the routes for the applications
-	r.Route("/Expense", func(r chi.Router) {
+	r.Route("/expense", func(r chi.Router) {
 		Controller.RegisterUserAPI(r)
 		Controller.RegisterDataAPI(r)
 	})
 	r.Route("/", func(r chi.Router) {
 		service.RegisterGoogleAPIs(r)
 	})
-	log.Println(http.ListenAndServe(":"+*port, r))
+	log.Println(http.ListenAndServe("0.0.0.0:"+*port, r))
 }

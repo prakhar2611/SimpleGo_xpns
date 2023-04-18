@@ -19,5 +19,6 @@
         "dbName" :  "xpnsdb"
     },
     "SBISheetOffset" : 20,
-    "test" : ",ms,msa"
+    "test" : ",ms,msa",
+    "internalService":"http://13.212.228.249:5000"
 }

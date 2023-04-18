@@ -31,7 +31,7 @@ func GetDbConnection() bool {
 			return false
 		} else {
 			db = dbInstance
-			db.AutoMigrate(&Models.User{}, &Models.UserToken{}, &Models.GmailExcelThreadSnapShot{}, &Models.ExpenseBO{})
+			db.AutoMigrate(&Models.User{}, &Models.UserToken{}, &Models.GmailExcelThreadSnapShot{}, &Models.ExpenseBO{}, &Models.B64decodedResponse{})
 			return true
 		}
 	}
@@ -99,6 +99,7 @@ func GetUserToken(token string) *oauth2.Token {
 	}
 	return t
 }
+
 func GetlastHistoryByLabel(label string) string {
 	if GetDbConnection() {
 		var snapShot Models.GmailExcelThreadSnapShot
@@ -118,11 +119,25 @@ func SendDataToPostgres(req []Models.ExpenseBO) bool {
 		if resp != nil && resp.RowsAffected > 0 {
 			return true
 		} else {
+			//throwing integrity check if any comes as counting excel sheet as whole body
 			fmt.Printf("Getting error while inserting err : %v", resp.Error.Error())
 			return false
 		}
 	}
 	return false
+}
+
+func SendHDFCToPostgres(req []*Models.B64decodedResponse) []string {
+	var failure []string
+	if GetDbConnection() {
+		for _, x := range req {
+			resp := db.Create(&x)
+			if resp != nil && resp.RowsAffected == 0 {
+				failure = append(failure, x.TransactionId)
+			}
+		}
+	}
+	return failure
 }
 
 // func InsertUserData(user *Models.User) bool {

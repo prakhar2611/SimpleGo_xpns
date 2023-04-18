@@ -14,7 +14,7 @@ type PayloadToMongo struct {
 
 type ExpenseBO struct {
 	gorm.Model
-	TxnId           string `gorm:"primarykey"`
+	TxnId           string `gorm:"unique"`
 	UserID          string
 	Month           string
 	Date            time.Time
@@ -28,6 +28,20 @@ type ExpenseBO struct {
 	BalanceLeft     float32
 	Category        string
 	Mode            string
+}
+
+type B64decodedResponse struct {
+	gorm.Model
+	AmountDebited string    `json:"amount_debited"`
+	Date          string    `json:"date"`
+	ETime         time.Time `json:"etime"`
+	TransactionId string    `json:"msgId" gorm:"unique"`
+	ToAccount     string    `json:"to_vpa"`
+}
+
+type GetEncodedDataReq struct {
+	MsgEncodedData string `json:"msgEncodedData"`
+	MsgId          string `json:"msgId"`
 }
 
 type BaseResponse struct {

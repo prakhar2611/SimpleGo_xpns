@@ -16,9 +16,9 @@ import (
 )
 
 func RegisterDataAPI(r chi.Router) {
-	r.Post("/api/User/v1/SendData", SendToMongo) //not using it for external use, same is implemented in the workflow check there
-	r.Get("/api/v1/GetExpense", GetXpns)
-	r.Post("/api/v1/ImportFromFile", ImportFormFile)
+	r.Post("/api/v1/sendData", SendToMongo) //not using it for external use, same is implemented in the workflow check there
+	r.Get("/api/v1/getExpense", GetXpns)
+	r.Post("/api/v1/importFromFile", ImportFormFile)
 	//r.Get("/api/v1/GetFromEmailByMonth", GetGmailByMonth)
 }
 
@@ -126,11 +126,13 @@ func ImportFormFile(w http.ResponseWriter, r *http.Request) {
 				if status {
 					response.JSON(w, http.StatusOK, fmt.Sprintf("Successfully Inserted Excel : ", files, accountType))
 					return
+				} else {
+					response.JSON(w, http.StatusOK, fmt.Sprintf("Already Inserted  : ", files, accountType))
 				}
 			} else {
 				res := Model.BaseResponse{
 					Status: false,
-					Error:  "Mongo payload is Empty",
+					Error:  "payload is Empty",
 				}
 				response.JSON(w, http.StatusUnprocessableEntity, res)
 			}
