@@ -6,6 +6,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"time"
 
 	"SimpleGo_xpns/Models"
 	"SimpleGo_xpns/Utilities"
@@ -17,15 +18,17 @@ import (
 	"golang.org/x/oauth2/google"
 
 	gmail "google.golang.org/api/gmail/v1"
+	"google.golang.org/api/option"
 )
 
 func RegisterGoogleAPIs(r chi.Router) {
 	r.Get("/auth/callback", GoogleCallback)
-	r.Get("/googleIn", RedirectGoogle)
-	//r.Get("/SyncUp", SyncMail)
+	r.Get("/SignIn", RedirectGoogle)
+	r.Get("/SyncMail", SyncMail)
 }
 
 var oauthConfig *oauth2.Config
+var user = "me"
 
 func initializeOauthConfig() *oauth2.Config {
 	b, err := os.ReadFile("GoogleAuth.json") //can be replace with viper get config and convert it into json.
@@ -55,7 +58,7 @@ func GoogleCallback(w http.ResponseWriter, r *http.Request) {
 		if tokenData != nil {
 			if dbConnector.InsertUserData(*user, *tokenData) {
 				//returning valid response to channel for further use of token
-				response.JSON(w, http.StatusOK, fmt.Sprintf("%v", Models.SignInResponse{Id: user.ID, Name: user.Name, Token: token.AccessToken, Email: user.Email}))
+				response.JSON(w, http.StatusOK, Models.SignInResponse{Id: user.ID, Name: user.Name, Token: token.AccessToken, Email: user.Email})
 				return
 			}
 		}
@@ -69,82 +72,112 @@ func GoogleCallback(w http.ResponseWriter, r *http.Request) {
 //"/googleIn"
 func RedirectGoogle(w http.ResponseWriter, r *http.Request) {
 	oauthConfig := initializeOauthConfig()
+	fmt.Println("Redirection eurl from config : ", oauthConfig.RedirectURL)
 	url := oauthConfig.AuthCodeURL("state-token", oauth2.AccessTypeOffline)
+
 	http.Redirect(w, r, url, 301)
 }
 
-// /"/SyncUp"
-// func SyncMail(w http.ResponseWriter, r *http.Request) {
-// 	var client *http.Client
+//"/SyncUp"
+func SyncMail(w http.ResponseWriter, r *http.Request) {
+	var client *http.Client
+	response := Utilities.GetResponse()
+	var label, from, to, query string
+	var accessToken string
 
-// 	var label string
-// 	if r.URL.Query().Get("labels") != "" {
-// 		label = r.URL.Query().Get("labels")
-// 	}
+	if r.Header.Get("authToken") != "" {
+		accessToken = r.Header.Get("authToken")
+	}
 
-// 	var accessToken string
-// 	if r.Header.Get("authToken") != "" {
-// 		accessToken = r.Header.Get("authToken")
-// 	}
+	if r.URL.Query().Get("label") != "" {
+		label = r.URL.Query().Get("label")
+	} else {
+		response.JSON(w, http.StatusBadRequest, Models.BaseResponse{Status: false, Error: "Please provide label to fetch"})
+		return
+	}
+	from = r.URL.Query().Get("from")
+	to = r.URL.Query().Get("to")
 
-// 	if workflow.VerifyIdToken(accessToken) {
-// 		token := dbConnector.GetUserToken(accessToken)
-// 		client = oauthConfig.Client(context.Background(), token)
+	if workflow.VerifyIdToken(accessToken) {
+		token := dbConnector.GetUserToken(accessToken)
+		client = oauthConfig.Client(context.Background(), token)
 
-// 		ctx := context.Background()
+		ctx := context.Background()
+		var k *gmail.ListThreadsResponse
 
-// 		srv, err := gmail.NewService(ctx, option.WithHTTPClient(client))
-// 		if err != nil {
-// 			log.Fatalf("Unable to retrieve Gmail client: %v", err)
-// 		}
+		srv, err := gmail.NewService(ctx, option.WithHTTPClient(client))
+		if err != nil {
+			log.Fatalf("Unable to retrieve Gmail client: %v", err)
+		}
 
-// 		//fetching the latest db historyId
+		if err != nil {
+			log.Fatalf("Unable to retrieve labels: %v", err)
+		}
 
-// 		lasthistoryid := dbConnector.GetlastHistoryByLabel(label)
-// 		var k *gmail.ListThreadsResponse
-// 		if len(lasthistoryid) == 0 {
-// 			//list all history and fetch all latest messages
-// 			workflow.FetchAllThread(label, srv)
-// 			return
+		threadservice := srv.Users.Threads.List(user)
 
-// 		} else {
-// 			//get lastest history and fetch lastest messages
-// 			//use users.history.list
-// 		}
+		if from != "" && to != "" {
+			query = fmt.Sprintf("label:%v after:%v before:%v", label, to, from)
+		} else {
+			//fetch all
+			query = fmt.Sprintf("label:%v", label)
+		}
 
-// 		if err != nil {
-// 			log.Fatalf("Unable to retrieve labels: %v", err)
-// 		}
-// 		user := "me"
-// 		threadservice := srv.Users.Threads.List(user)
-// 		threadservice.Q(fmt.Sprintf("label:%v", label))
-// 		k, err = threadservice.Do()
-// 		//looping through threads
-// 		for _, x := range k.Threads {
-// 			//getting one thread  using id
-// 			threadservice := srv.Users.Threads.Get(user, x.Id)
-// 			th, _ := threadservice.Do()
+		threadservice.Q(query)
+		k, err = threadservice.Do()
 
-// 			//looping over mails
-// 			for _, msg := range th.Messages {
+		//getting all the msgs encoded data
+		encodedReq, timestampmap := getDecodeFromThread(k, srv)
+		decodedData := workflow.GetDataForbase64(encodedReq)
 
-// 				msgId := msg.Id
-// 				attId := msg.Payload.Parts[1].Body.AttachmentId
+		for _, f := range decodedData {
+			f.ETime = timestampmap[f.TransactionId] //Note : using pointer to updating struct
+		}
 
-// 				msgService := srv.Users.Messages.Attachments.Get(user, msgId, attId)
-// 				u, _ := msgService.Do()
-// 				decoded, _ := base64.URLEncoding.DecodeString(u.Data)
-// 				d := bytes.NewReader(decoded)
-// 				req := workflow.SBIparser("", d)
-// 				fmt.Printf("%v", req)
-// 				//send data to postgres
-// 				// isSuccess := dbConnector.SendDataToPostgres(req)
-// 				// if isSuccess {
-// 				// 	fmt.Println("sucessfully inserted user record to db")
-// 				// }
-// 			}
-// 		}
-// 	} else {
-// 		http.Redirect(w, r, "localhost:9005/googleIn", http.StatusAccepted)
-// 	}
-// }
+		//send data to db with merging SBI and HDFC records in postgres
+		//TODO
+		//Currently creating another table
+		if decodedData != nil {
+			failedTxns := dbConnector.SendHDFCToPostgres(decodedData)
+			if len(failedTxns) > 0 {
+				response.JSON(w, http.StatusOK, len(failedTxns))
+				return
+			} else {
+				response.JSON(w, http.StatusOK, "sucesss")
+				return
+			}
+		}
+
+	} else {
+		http.Redirect(w, r, "localhost:9005/SignIn", http.StatusAccepted)
+	}
+}
+
+func getDecodeFromThread(k *gmail.ListThreadsResponse, srv *gmail.Service) ([]Models.GetEncodedDataReq, map[string]time.Time) {
+	var encodedReq []Models.GetEncodedDataReq
+	timestampmap := make(map[string]time.Time)
+
+	for _, x := range k.Threads {
+		//getting one thread  using id
+		threadservice := srv.Users.Threads.Get(user, x.Id)
+		th, _ := threadservice.Do()
+
+		//looping over mails over a thread
+		for _, msg := range th.Messages {
+			var encodedData string
+			if len(msg.Payload.Parts) > 0 {
+				encodedData = msg.Payload.Parts[0].Body.Data
+			} else {
+				encodedData = msg.Payload.Body.Data
+			}
+			encodedReq = append(encodedReq, Models.GetEncodedDataReq{
+				MsgEncodedData: encodedData,
+				MsgId:          msg.Id,
+			})
+			loc, _ := time.LoadLocation("Asia/Kolkata")
+			t := time.UnixMilli(msg.InternalDate).In(loc).Format("2-Jan-06 15:04:05")
+			timestampmap[msg.Id], _ = time.Parse("2-Jan-06 15:04:05", t)
+		}
+	}
+	return encodedReq, timestampmap
+}

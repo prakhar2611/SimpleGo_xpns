@@ -19,3 +19,9 @@ More on tech- This project is totally based on the Beginner for Go lang APIs (as
 
 Release 1.2 - 
 - Implementaion of excel and pdf extarctor as sperate service.
+- Pushing data to Postgres Db with Expense Model 
+- Deployed Super set docker in unbuntu aws Ec2 Server 
+- visualatisation of transactional db at our end
+
+
+ALTER TABLE expense_bos ADD CONSTRAINT txnid UNIQUE (txn_id);

@@ -1,0 +1,35 @@
+
+Google services api : 
+http://localhost:59596/authorize/?code=4/fUuEo9ypuG8z7dINfpzuV-XOuTRlDS_y9RCzVON56SI# - to suthoroze the code need to checck the iuse of Integrating
+
+Gooogle Email service :
+code commented lines -
+                // msgService := srv.Users.Messages.Attachments.Get(user, msgId, attId)
+				// u, _ := msgService.Do()
+				// decoded, _ := base64.URLEncoding.DecodeString(u.Data)
+				//d := bytes.NewReader(decoded)
+
+				// y := string(decoded)
+				// fmt.Println(y)
+				// req := workflow.SBIparser("", d)
+				//fmt.Printf("%v", req)
+				//send data to postgres
+				// isSuccess := dbConnector.SendDataToPostgres(req)
+				// if isSuccess {
+				// 	fmt.Println("sucessfully inserted user record to db")
+				// }
+
+
+                	//fetching the latest db historyId
+
+                    // lasthistoryid := dbConnector.GetlastHistoryByLabel(label)
+
+                    // if len(lasthistoryid) == 0 {
+                    // 	//list all history and fetch all latest messages
+                    // 	workflow.FetchAllThread(label, srv)
+                    // 	return
+
+                    // } else {
+                    // 	//get lastest history and fetch lastest messages
+                    // 	//use users.history.list
+                    // }
