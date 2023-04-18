@@ -1,0 +1,27 @@
+This is the latest and main git link of the same project
+Git link - https://github.com/prakhar2611/SimpleGo_xpns
+Main Branch - connectivity_001
+
+Devloper's Note -
+
+Release 1.1 -
+
+-Google based User authentication
+-Automatically personalising user expenses using the account summary
+-Reports on the user expenses (Where he/she is sepnding more and where he/she needs to spend less or more)
+
+Upcoming Ideas -
+
+Integrating with the upi and gmail for seamless data Fetching
+Implementaion of adaptive learning library
+More on tech- This project is totally based on the Beginner for Go lang APIs (as of now). This will include the Concurrency, easy connecting, creating and mainting database (mongodb), Loggings, Caching.
+
+
+Release 1.2 - 
+- Implementaion of excel and pdf extarctor as sperate service.
+- Pushing data to Postgres Db with Expense Model 
+- Deployed Super set docker in unbuntu aws Ec2 Server 
+- visualatisation of transactional db at our end
+
+
+ALTER TABLE expense_bos ADD CONSTRAINT txnid UNIQUE (txn_id);

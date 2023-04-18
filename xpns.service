@@ -1,0 +1,15 @@
+[Unit]
+Description=xpns
+After=network.target
+StartLimitIntervalSec=0
+
+[Service]
+Type=simple
+Restart=always
+RestartSec=1
+WorkingDirectory=/home/ubuntu/Prakhar/xpns
+ExecStart=/home/ubuntu/Prakhar/xpns/SimpleXpns
+
+
+[Install]
+WantedBy=multi-user.target

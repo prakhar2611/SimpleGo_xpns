@@ -1,5 +1,4 @@
 {
-
     "AtlasConfig" :
     {
         "userName" : "Prakhar2611",
@@ -11,5 +10,15 @@
         "clientKey" : "64464811543-fee5m8plhj94lpv9vgcei91r15189b45.apps.googleusercontent.com",
         "clientSecret" : "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",
         "callbackUrl" : "http://localhost:9005/auth/callback?provider=google"
-    }
+    },
+    "Postgresql" : 
+    {
+        "host" : "xpnsdb1.cvatnnmljapj.ap-southeast-1.rds.amazonaws.com",
+        "userName" : "mahatma",
+        "password" : "hoepicker",
+        "dbName" :  "xpnsdb"
+    },
+    "SBISheetOffset" : 20,
+    "test" : ",ms,msa",
+    "internalService":"http://13.212.228.249:5000"
 }

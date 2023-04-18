@@ -9,7 +9,7 @@
             "type": "go",
             "request": "launch",
             "mode": "auto",
-            "program": "C:/Users/Prakhar/go/src/ExpenseTracker/main.go"
+            "program": "C:\\Program Files\\Go\\src\\SimpleGo_xpns"
         }
     ]
 }
