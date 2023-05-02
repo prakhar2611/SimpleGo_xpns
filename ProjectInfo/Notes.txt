@@ -33,3 +33,6 @@ code commented lines -
                     // 	//get lastest history and fetch lastest messages
                     // 	//use users.history.list
                     // }
+
+
+3. Skipping saving the auth token now in db, saving in local cache - commented on the code 

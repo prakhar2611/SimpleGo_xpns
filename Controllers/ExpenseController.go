@@ -1,23 +1,24 @@
 package Controllers
 
 import (
+	"SimpleGo_xpns/Models"
 	Model "SimpleGo_xpns/Models"
 	"SimpleGo_xpns/Utilities"
+	dbConnector "SimpleGo_xpns/Utilities/DbConnector"
 	"SimpleGo_xpns/Workflows"
+	workflow "SimpleGo_xpns/Workflows"
 	"context"
 	"encoding/json"
 	"fmt"
-	"log"
 	"net/http"
-	"strconv"
 
 	"github.com/go-chi/chi"
-	"go.mongodb.org/mongo-driver/bson"
 )
 
 func RegisterDataAPI(r chi.Router) {
 	r.Post("/api/v1/sendData", SendToMongo) //not using it for external use, same is implemented in the workflow check there
 	r.Get("/api/v1/getExpense", GetXpns)
+	//r.Get("/api/v1/getExpense", )
 	r.Post("/api/v1/importFromFile", ImportFormFile)
 	//r.Get("/api/v1/GetFromEmailByMonth", GetGmailByMonth)
 }
@@ -51,34 +52,38 @@ func SendToMongo(w http.ResponseWriter, r *http.Request) {
 
 //need to check this fuction flow
 func GetXpns(w http.ResponseWriter, r *http.Request) {
-	var userId string
-	var res Model.PayloadToMongo
-	if r.URL.Query().Get("UserId") != "" {
-		userId = r.URL.Query().Get("UserId")
-	}
-	u, _ := strconv.ParseInt(userId, 10, 32)
-
+	w.Header().Set("content-type", "application/json")
 	response := Utilities.GetResponse()
-	c, _ := Utilities.ConectToMongo()
-	col := c.Database("SimpleGo").Collection("Expenses")
-	if cur, err := col.Find(context.Background(), bson.D{{"userId", u}}); err == nil {
-		//fmt.Print(id)
-		for cur.Next(context.TODO()) {
-			//Create a value into which the single document can be decoded
-			var elem Model.ExpenseBO
-			err := cur.Decode(&elem)
-			if err != nil {
-				log.Fatal(err)
-			}
+	var xpnsData []*Models.B64decodedResponse
+	var label, from, to string
 
-			res.Data = append(res.Data, elem)
+	var token string
+	if r.Header.Get("token") != "" {
+		token = r.Header.Get("token")
+	}
 
+	if r.URL.Query().Get("label") != "" {
+		label = r.URL.Query().Get("label")
+	} else {
+		response.JSON(w, http.StatusBadRequest, Models.BaseResponse{Status: false, Error: "Please provide label to fetch"})
+		return
+	}
+	from = r.URL.Query().Get("from")
+	to = r.URL.Query().Get("to")
+
+	if token != "" {
+		user := workflow.GetUserInfo(token)
+		if user != nil && label == "HDFC" {
+			xpnsData = dbConnector.GetXpnsFromPostgres(from, to)
 		}
-
-		response.JSON(w, http.StatusInternalServerError, res)
+		if xpnsData != nil {
+			response.JSON(w, http.StatusOK, xpnsData)
+			return
+		}
+		response.JSON(w, http.StatusInternalServerError, fmt.Sprintf("Unable to fecth the data"))
 		return
 	} else {
-		response.JSON(w, http.StatusInternalServerError, fmt.Sprintf("Error Occured while Inserting data %s", err))
+		response.JSON(w, http.StatusUnauthorized, fmt.Sprintf("Unauthorized, please login"))
 		return
 	}
 }

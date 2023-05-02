@@ -22,8 +22,11 @@ import (
 )
 
 func RegisterGoogleAPIs(r chi.Router) {
+	//Not using currently - using ui signin
 	r.Get("/auth/callback", GoogleCallback)
 	r.Get("/SignIn", RedirectGoogle)
+
+	//google servie api
 	r.Get("/SyncMail", SyncMail)
 }
 
@@ -56,9 +59,9 @@ func GoogleCallback(w http.ResponseWriter, r *http.Request) {
 		//Mapping token in diff model struct
 		tokenData := Utilities.MapTokenResponse(user.ID, *token)
 		if tokenData != nil {
-			if dbConnector.InsertUserData(*user, *tokenData) {
+			if dbConnector.InsertUserData(*user) {
 				//returning valid response to channel for further use of token
-				response.JSON(w, http.StatusOK, Models.SignInResponse{Id: user.ID, Name: user.Name, Token: token.AccessToken, Email: user.Email})
+				response.JSON(w, http.StatusOK, fmt.Sprintf("Successfully fetch the data : %v", tokenData.AccessToken))
 				return
 			}
 		}
@@ -98,9 +101,11 @@ func SyncMail(w http.ResponseWriter, r *http.Request) {
 	from = r.URL.Query().Get("from")
 	to = r.URL.Query().Get("to")
 
-	if workflow.VerifyIdToken(accessToken) {
-		token := dbConnector.GetUserToken(accessToken)
-		client = oauthConfig.Client(context.Background(), token)
+	userId := workflow.VerifyIdToken(accessToken)
+	if userId != "" {
+		//token := dbConnector.GetUserToken(accessToken)
+		token := Utilities.GetKeyValue(userId)
+		client = oauthConfig.Client(context.Background(), token.(*oauth2.Token))
 
 		ctx := context.Background()
 		var k *gmail.ListThreadsResponse
