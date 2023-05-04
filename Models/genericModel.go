@@ -28,3 +28,12 @@ type UserXpnsData struct {
 	TransactionId string    `json:"msgId" gorm:"unique"`
 	ToAccount     string    `json:"to_vpa"`
 }
+
+type UpdatecategoryPayload struct {
+	MsgId    string `json:"msgId"`
+	Category string `json:"category"`
+}
+
+type UpdateCategoryResponse struct {
+	FailureMsgId []string `json:"failuerMsgId"`
+}

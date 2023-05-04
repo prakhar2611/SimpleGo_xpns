@@ -37,6 +37,7 @@ type B64decodedResponse struct {
 	ETime         time.Time `json:"etime"`
 	TransactionId string    `json:"msgId" gorm:"unique"`
 	ToAccount     string    `json:"to_vpa"`
+	Category      string    `json:"category"`
 }
 
 type GetEncodedDataReq struct {

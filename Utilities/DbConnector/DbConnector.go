@@ -61,6 +61,20 @@ func InsertUserData(user Models.User) bool {
 	return false
 }
 
+func UpdateCategory(payload *[]Models.UpdatecategoryPayload) (bool, []string) {
+	var failureMsgId []string
+	if GetDbConnection() {
+		for _, x := range *payload {
+			r := db.Model(&Models.B64decodedResponse{}).Where("transaction_id = ?", x.MsgId).Update("category", x.Category)
+			if r.RowsAffected == 0 {
+				failureMsgId = append(failureMsgId, x.MsgId)
+			}
+		}
+		return true, failureMsgId
+	}
+	return false, failureMsgId
+}
+
 func UpdateAuthToken(user Models.User, token Models.UserToken) bool {
 	var dbToken Models.UserToken
 	if GetDbConnection() {
