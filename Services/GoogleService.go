@@ -19,6 +19,7 @@ import (
 
 	gmail "google.golang.org/api/gmail/v1"
 	"google.golang.org/api/option"
+	"google.golang.org/api/option"
 )
 
 func RegisterGoogleAPIs(r chi.Router) {
@@ -61,7 +62,7 @@ func GoogleCallback(w http.ResponseWriter, r *http.Request) {
 		if tokenData != nil {
 			if dbConnector.InsertUserData(*user) {
 				//returning valid response to channel for further use of token
-				response.JSON(w, http.StatusOK, fmt.Sprintf("Successfully fetch the data : %v", tokenData.AccessToken))
+				response.JSON(w, http.StatusOK, fmt.Sprintf("%v", Models.SignInResponse{Id: user.ID, Name: user.Name, Token: token.AccessToken, Email: user.Email}))
 				return
 			}
 		}
@@ -81,13 +82,9 @@ func RedirectGoogle(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, url, 301)
 }
 
-//"/SyncUp"
-func SyncMail(w http.ResponseWriter, r *http.Request) {
-	var client *http.Client
-	response := Utilities.GetResponse()
-	baseresp := Models.BaseResponse{}
-	var label, from, to, query string
-	var accessToken string
+// /"/SyncUp"
+// func SyncMail(w http.ResponseWriter, r *http.Request) {
+// 	var client *http.Client
 
 	if r.Header.Get("token") != "" {
 		accessToken = r.Header.Get("token")

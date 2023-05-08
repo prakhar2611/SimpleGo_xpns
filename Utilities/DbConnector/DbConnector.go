@@ -136,6 +136,7 @@ func SendDataToPostgres(req []Models.ExpenseBO) bool {
 			return true
 		} else {
 			//throwing integrity check if any comes as counting excel sheet as whole body
+			//throwing integrity check if any comes as counting excel sheet as whole body
 			fmt.Printf("Getting error while inserting err : %v", resp.Error.Error())
 			return false
 		}
