@@ -22,8 +22,11 @@ import (
 )
 
 func RegisterGoogleAPIs(r chi.Router) {
+	//Not using currently - using ui signin
 	r.Get("/auth/callback", GoogleCallback)
 	r.Get("/SignIn", RedirectGoogle)
+
+	//google service api
 	r.Get("/SyncMail", SyncMail)
 }
 
@@ -56,9 +59,9 @@ func GoogleCallback(w http.ResponseWriter, r *http.Request) {
 		//Mapping token in diff model struct
 		tokenData := Utilities.MapTokenResponse(user.ID, *token)
 		if tokenData != nil {
-			if dbConnector.InsertUserData(*user, *tokenData) {
+			if dbConnector.InsertUserData(*user) {
 				//returning valid response to channel for further use of token
-				response.JSON(w, http.StatusOK, Models.SignInResponse{Id: user.ID, Name: user.Name, Token: token.AccessToken, Email: user.Email})
+				response.JSON(w, http.StatusOK, fmt.Sprintf("Successfully fetch the data : %v", tokenData.AccessToken))
 				return
 			}
 		}
@@ -82,11 +85,12 @@ func RedirectGoogle(w http.ResponseWriter, r *http.Request) {
 func SyncMail(w http.ResponseWriter, r *http.Request) {
 	var client *http.Client
 	response := Utilities.GetResponse()
+	baseresp := Models.BaseResponse{}
 	var label, from, to, query string
 	var accessToken string
 
-	if r.Header.Get("authToken") != "" {
-		accessToken = r.Header.Get("authToken")
+	if r.Header.Get("token") != "" {
+		accessToken = r.Header.Get("token")
 	}
 
 	if r.URL.Query().Get("label") != "" {
@@ -98,9 +102,11 @@ func SyncMail(w http.ResponseWriter, r *http.Request) {
 	from = r.URL.Query().Get("from")
 	to = r.URL.Query().Get("to")
 
-	if workflow.VerifyIdToken(accessToken) {
-		token := dbConnector.GetUserToken(accessToken)
-		client = oauthConfig.Client(context.Background(), token)
+	userId := workflow.VerifyIdToken(accessToken)
+	if userId != "" {
+		//token := dbConnector.GetUserToken(accessToken)
+		token := Utilities.GetKeyValue(userId)
+		client = oauthConfig.Client(context.Background(), token.(*oauth2.Token))
 
 		ctx := context.Background()
 		var k *gmail.ListThreadsResponse
@@ -117,7 +123,7 @@ func SyncMail(w http.ResponseWriter, r *http.Request) {
 		threadservice := srv.Users.Threads.List(user)
 
 		if from != "" && to != "" {
-			query = fmt.Sprintf("label:%v after:%v before:%v", label, to, from)
+			query = fmt.Sprintf("label:%v after:%v before:%v", label, from, to)
 		} else {
 			//fetch all
 			query = fmt.Sprintf("label:%v", label)
@@ -140,16 +146,31 @@ func SyncMail(w http.ResponseWriter, r *http.Request) {
 		if decodedData != nil {
 			failedTxns := dbConnector.SendHDFCToPostgres(decodedData)
 			if len(failedTxns) > 0 {
-				response.JSON(w, http.StatusOK, len(failedTxns))
+				baseresp.Status = true
+				baseresp.Error = ""
+
+				response.JSON(w, http.StatusOK, Models.SyncUpResp{
+					BaseResponse: baseresp,
+					FailedTxns:   failedTxns,
+				})
 				return
 			} else {
-				response.JSON(w, http.StatusOK, "sucesss")
+				baseresp.Status = true
+				baseresp.Error = "Synced !"
+				response.JSON(w, http.StatusOK, Models.SyncUpResp{
+					BaseResponse: baseresp, FailedTxns: []string{},
+				})
 				return
 			}
 		}
 
 	} else {
-		http.Redirect(w, r, "localhost:9005/SignIn", http.StatusAccepted)
+		baseresp.Status = false
+		baseresp.Error = "Uanle to sync the transactions"
+		response.JSON(w, http.StatusOK, Models.SyncUpResp{
+			BaseResponse: baseresp, FailedTxns: []string{},
+		})
+		return
 	}
 }
 

@@ -31,25 +31,27 @@ func GetDbConnection() bool {
 			return false
 		} else {
 			db = dbInstance
-			db.AutoMigrate(&Models.User{}, &Models.UserToken{}, &Models.GmailExcelThreadSnapShot{}, &Models.ExpenseBO{}, &Models.B64decodedResponse{})
+			//will us it when creating our own token with diff login system - user token
+			//db.AutoMigrate(&Models.User{}, &Models.UserToken{}, &Models.GmailExcelThreadSnapShot{}, &Models.ExpenseBO{}, &Models.B64decodedResponse{})
+			db.AutoMigrate(&Models.User{}, &Models.ExpenseBO{}, &Models.B64decodedResponse{})
 			return true
 		}
 	}
 	return true
 }
 
-func InsertUserData(user Models.User, token Models.UserToken) bool {
+func InsertUserData(user Models.User) bool {
 	if GetDbConnection() {
 		var dbUser Models.User
 		resp := db.Where("Email = ?", user.Email).First(&dbUser)
 		if resp.RowsAffected > 0 {
-			UpdateAuthToken(user, token)
+			//UpdateAuthToken(user, token) skipping saving the auth token now, saving in local cache
 			return true
 			//user already inserted in the db no need to insert user token
 		} else {
 			resp = db.Create(&user)
 			if resp != nil && resp.RowsAffected > 0 {
-				UpdateAuthToken(user, token)
+				//UpdateAuthToken(user, token)
 				return true
 			} else {
 				fmt.Printf("Getting error while inserting user data : %v", user.Email)
@@ -59,6 +61,20 @@ func InsertUserData(user Models.User, token Models.UserToken) bool {
 
 	}
 	return false
+}
+
+func UpdateCategory(payload *Models.UpdatecategoryPayload) (bool, []string) {
+	var failureMsgId []string
+	if GetDbConnection() {
+		for key, value := range *&payload.Data {
+			r := db.Model(&Models.B64decodedResponse{}).Where("transaction_id = ?", key).Update("category", value)
+			if r.RowsAffected == 0 {
+				failureMsgId = append(failureMsgId, key)
+			}
+		}
+		return true, failureMsgId
+	}
+	return false, failureMsgId
 }
 
 func UpdateAuthToken(user Models.User, token Models.UserToken) bool {
@@ -120,6 +136,7 @@ func SendDataToPostgres(req []Models.ExpenseBO) bool {
 			return true
 		} else {
 			//throwing integrity check if any comes as counting excel sheet as whole body
+			//throwing integrity check if any comes as counting excel sheet as whole body
 			fmt.Printf("Getting error while inserting err : %v", resp.Error.Error())
 			return false
 		}
@@ -138,6 +155,19 @@ func SendHDFCToPostgres(req []*Models.B64decodedResponse) []string {
 		}
 	}
 	return failure
+}
+
+func GetXpnsFromPostgres(from string, to string) []*Models.B64decodedResponse {
+	if GetDbConnection() {
+		var data []*Models.B64decodedResponse
+		resp := db.Where("e_time >= ? AND e_time <= ?", from, to).Order("e_time DESC").Find(&data)
+		if resp != nil && resp.RowsAffected > 0 {
+			return data
+		} else if resp.RowsAffected == 0 {
+			return nil
+		}
+	}
+	return nil
 }
 
 // func InsertUserData(user *Models.User) bool {

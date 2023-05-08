@@ -25,13 +25,13 @@ func GetUserInfo(accessToken string) *Models.User {
 	return nil
 }
 
-func VerifyIdToken(idToken string) bool {
+func VerifyIdToken(idToken string) string {
 
 	userid := GetUserInfo(idToken)
 	if userid == nil {
-		return false
+		return ""
 	}
-	return true
+	return userid.ID
 }
 
 func FetchAllThread(label string, srv *gmail.Service) bool {

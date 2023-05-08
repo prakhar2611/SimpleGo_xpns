@@ -20,5 +20,7 @@
     },
     "SBISheetOffset" : 20,
     "test" : ",ms,msa",
-    "internalService":"http://13.212.228.249:5000"
+    "internalService":"http://13.212.228.249:5000",
+    "OnSuccessLoginURL" : "http://localhost:8080/try",
+    "OopsLoginURL" : "http://localhost:8080/Home"
 }
