@@ -1,4 +1,4 @@
-# Exopense_go
+# Expense_go
 Code base for Expense Calculator in Go lang
 
 Release 1.1 - 
