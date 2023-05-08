@@ -31,7 +31,9 @@ func GetDbConnection() bool {
 			return false
 		} else {
 			db = dbInstance
-			db.AutoMigrate(&Models.User{}, &Models.UserToken{}, &Models.GmailExcelThreadSnapShot{}, &Models.ExpenseBO{}, &Models.B64decodedResponse{})
+			//will us it when creating our own token with diff login system - user token
+			//db.AutoMigrate(&Models.User{}, &Models.UserToken{}, &Models.GmailExcelThreadSnapShot{}, &Models.ExpenseBO{}, &Models.B64decodedResponse{})
+			db.AutoMigrate(&Models.User{}, &Models.ExpenseBO{}, &Models.B64decodedResponse{})
 			return true
 		}
 	}
@@ -61,13 +63,13 @@ func InsertUserData(user Models.User) bool {
 	return false
 }
 
-func UpdateCategory(payload *[]Models.UpdatecategoryPayload) (bool, []string) {
+func UpdateCategory(payload *Models.UpdatecategoryPayload) (bool, []string) {
 	var failureMsgId []string
 	if GetDbConnection() {
-		for _, x := range *payload {
-			r := db.Model(&Models.B64decodedResponse{}).Where("transaction_id = ?", x.MsgId).Update("category", x.Category)
+		for key, value := range *&payload.Data {
+			r := db.Model(&Models.B64decodedResponse{}).Where("transaction_id = ?", key).Update("category", value)
 			if r.RowsAffected == 0 {
-				failureMsgId = append(failureMsgId, x.MsgId)
+				failureMsgId = append(failureMsgId, key)
 			}
 		}
 		return true, failureMsgId
@@ -157,7 +159,7 @@ func SendHDFCToPostgres(req []*Models.B64decodedResponse) []string {
 func GetXpnsFromPostgres(from string, to string) []*Models.B64decodedResponse {
 	if GetDbConnection() {
 		var data []*Models.B64decodedResponse
-		resp := db.Where("e_time >= ? AND e_time <= ?", from, to).Find(&data)
+		resp := db.Where("e_time >= ? AND e_time <= ?", from, to).Order("e_time DESC").Find(&data)
 		if resp != nil && resp.RowsAffected > 0 {
 			return data
 		} else if resp.RowsAffected == 0 {

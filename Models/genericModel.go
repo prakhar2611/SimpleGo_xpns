@@ -1,6 +1,8 @@
 package Models
 
-import "time"
+import (
+	"time"
+)
 
 type SignInCallbackResponse struct {
 	BaseResponse
@@ -30,10 +32,14 @@ type UserXpnsData struct {
 }
 
 type UpdatecategoryPayload struct {
-	MsgId    string `json:"msgId"`
-	Category string `json:"category"`
+	Data map[string]interface{} `json:"data"`
 }
 
 type UpdateCategoryResponse struct {
 	FailureMsgId []string `json:"failuerMsgId"`
+}
+
+type SyncUpResp struct {
+	BaseResponse
+	FailedTxns []string `json:"failedTxns"`
 }

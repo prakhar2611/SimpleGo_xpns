@@ -26,7 +26,7 @@ func RegisterGoogleAPIs(r chi.Router) {
 	r.Get("/auth/callback", GoogleCallback)
 	r.Get("/SignIn", RedirectGoogle)
 
-	//google servie api
+	//google service api
 	r.Get("/SyncMail", SyncMail)
 }
 
@@ -85,11 +85,12 @@ func RedirectGoogle(w http.ResponseWriter, r *http.Request) {
 func SyncMail(w http.ResponseWriter, r *http.Request) {
 	var client *http.Client
 	response := Utilities.GetResponse()
+	baseresp := Models.BaseResponse{}
 	var label, from, to, query string
 	var accessToken string
 
-	if r.Header.Get("authToken") != "" {
-		accessToken = r.Header.Get("authToken")
+	if r.Header.Get("token") != "" {
+		accessToken = r.Header.Get("token")
 	}
 
 	if r.URL.Query().Get("label") != "" {
@@ -122,7 +123,7 @@ func SyncMail(w http.ResponseWriter, r *http.Request) {
 		threadservice := srv.Users.Threads.List(user)
 
 		if from != "" && to != "" {
-			query = fmt.Sprintf("label:%v after:%v before:%v", label, to, from)
+			query = fmt.Sprintf("label:%v after:%v before:%v", label, from, to)
 		} else {
 			//fetch all
 			query = fmt.Sprintf("label:%v", label)
@@ -145,16 +146,31 @@ func SyncMail(w http.ResponseWriter, r *http.Request) {
 		if decodedData != nil {
 			failedTxns := dbConnector.SendHDFCToPostgres(decodedData)
 			if len(failedTxns) > 0 {
-				response.JSON(w, http.StatusOK, len(failedTxns))
+				baseresp.Status = true
+				baseresp.Error = ""
+
+				response.JSON(w, http.StatusOK, Models.SyncUpResp{
+					BaseResponse: baseresp,
+					FailedTxns:   failedTxns,
+				})
 				return
 			} else {
-				response.JSON(w, http.StatusOK, "sucesss")
+				baseresp.Status = true
+				baseresp.Error = "Synced !"
+				response.JSON(w, http.StatusOK, Models.SyncUpResp{
+					BaseResponse: baseresp, FailedTxns: []string{},
+				})
 				return
 			}
 		}
 
 	} else {
-		http.Redirect(w, r, "localhost:9005/SignIn", http.StatusAccepted)
+		baseresp.Status = false
+		baseresp.Error = "Uanle to sync the transactions"
+		response.JSON(w, http.StatusOK, Models.SyncUpResp{
+			BaseResponse: baseresp, FailedTxns: []string{},
+		})
+		return
 	}
 }
 

@@ -57,7 +57,7 @@ func UpdateCategory(w http.ResponseWriter, r *http.Request) {
 
 	var token string
 
-	var request *[]Models.UpdatecategoryPayload
+	var request *Models.UpdatecategoryPayload
 	err := json.NewDecoder(r.Body).Decode(&request)
 	if r.Header.Get("token") != "" && request != nil {
 		token = r.Header.Get("token")
@@ -108,10 +108,10 @@ func GetXpns(w http.ResponseWriter, r *http.Request) {
 			response.JSON(w, http.StatusOK, xpnsData)
 			return
 		}
-		response.JSON(w, http.StatusInternalServerError, fmt.Sprintf("Unable to fecth the data"))
+		response.JSON(w, http.StatusInternalServerError, Models.BaseResponse{Status: false, Error: "Unable to fecth the data"})
 		return
 	} else {
-		response.JSON(w, http.StatusUnauthorized, fmt.Sprintf("Unauthorized, please login"))
+		response.JSON(w, http.StatusUnauthorized, Models.BaseResponse{Status: false, Error: "Unauthorized, please login"})
 		return
 	}
 }
