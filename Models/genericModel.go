@@ -21,6 +21,7 @@ type UserProfile struct {
 	Email   string `json:"email"`
 	Name    string `json:"name"`
 	Picture string `json:"picture"`
+	Userid  string `json:"userId"`
 }
 
 type UserXpnsData struct {
@@ -32,7 +33,7 @@ type UserXpnsData struct {
 }
 
 type UpdatecategoryPayload struct {
-	Data map[string]interface{} `json:"data"`
+	Data map[string]categoryL `json:"data"`
 }
 
 type UpdateCategoryResponse struct {
@@ -42,4 +43,9 @@ type UpdateCategoryResponse struct {
 type SyncUpResp struct {
 	BaseResponse
 	FailedTxns []string `json:"failedTxns"`
+}
+
+type categoryL struct {
+	Category string `json:"category"`
+	Label    string `json:"label"`
 }

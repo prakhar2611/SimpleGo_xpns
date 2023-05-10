@@ -67,7 +67,7 @@ func UpdateCategory(payload *Models.UpdatecategoryPayload) (bool, []string) {
 	var failureMsgId []string
 	if GetDbConnection() {
 		for key, value := range *&payload.Data {
-			r := db.Model(&Models.B64decodedResponse{}).Where("transaction_id = ?", key).Update("category", value)
+			r := db.Model(&Models.B64decodedResponse{}).Where("transaction_id = ?", key).Updates(map[string]interface{}{"category": value.Category, "label": value.Label})
 			if r.RowsAffected == 0 {
 				failureMsgId = append(failureMsgId, key)
 			}
@@ -157,10 +157,10 @@ func SendHDFCToPostgres(req []*Models.B64decodedResponse) []string {
 	return failure
 }
 
-func GetXpnsFromPostgres(from string, to string) []*Models.B64decodedResponse {
+func GetXpnsFromPostgres(from string, to string, userId string) []*Models.B64decodedResponse {
 	if GetDbConnection() {
 		var data []*Models.B64decodedResponse
-		resp := db.Where("e_time >= ? AND e_time <= ?", from, to).Order("e_time DESC").Find(&data)
+		resp := db.Where("e_time >= ? AND e_time <= ? AND to_account != '' AND userId = ? ", from, to, userId).Order("e_time DESC").Find(&data)
 		if resp != nil && resp.RowsAffected > 0 {
 			return data
 		} else if resp.RowsAffected == 0 {

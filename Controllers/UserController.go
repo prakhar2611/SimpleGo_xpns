@@ -32,6 +32,7 @@ func GetUserProfile(w http.ResponseWriter, r *http.Request) {
 			userProfile.Email = user.Email
 			userProfile.Picture = user.Picture
 			userProfile.Name = user.Name
+			userProfile.Userid = user.ID
 
 			response.JSON(w, http.StatusOK, userProfile)
 			return
@@ -45,9 +46,6 @@ func GetUserProfile(w http.ResponseWriter, r *http.Request) {
 		response.JSON(w, http.StatusBadRequest, userProfile)
 		return
 	}
-	// response.JSON(w, http.StatusAccepted, "working")
-	// return
-
 }
 
 func SignIn(w http.ResponseWriter, r *http.Request) {

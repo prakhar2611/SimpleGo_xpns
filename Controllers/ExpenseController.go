@@ -102,7 +102,7 @@ func GetXpns(w http.ResponseWriter, r *http.Request) {
 	if token != "" {
 		user := workflow.GetUserInfo(token)
 		if user != nil && label == "HDFC" {
-			xpnsData = dbConnector.GetXpnsFromPostgres(from, to)
+			xpnsData = dbConnector.GetXpnsFromPostgres(from, to, user.ID)
 		}
 		if xpnsData != nil {
 			response.JSON(w, http.StatusOK, xpnsData)

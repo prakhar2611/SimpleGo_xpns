@@ -38,6 +38,7 @@ type B64decodedResponse struct {
 	TransactionId string    `json:"msgId" gorm:"unique"`
 	ToAccount     string    `json:"to_vpa"`
 	Category      string    `json:"category"`
+	Label         string    `json:"label"`
 }
 
 type GetEncodedDataReq struct {
