@@ -2,6 +2,7 @@ package Services
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
@@ -134,10 +135,12 @@ func SyncMail(w http.ResponseWriter, r *http.Request) {
 
 		//getting all the msgs encoded data
 		encodedReq, timestampmap := getDecodeFromThread(k, srv)
-		decodedData := workflow.GetDataForbase64(encodedReq)
+		f, _ := json.Marshal(encodedReq)
+		fmt.Printf(string(f))
+		decodedData := workflow.ExtractBodyFromEncodedData(encodedReq)
 
-		for _, f := range decodedData {
-			f.ETime = timestampmap[f.TransactionId] //Note : using pointer to updating struct
+		for i, f := range decodedData {
+			decodedData[i].ETime = timestampmap[f.TransactionId] //Note : using pointer to updating struct
 		}
 
 		//send data to db with merging SBI and HDFC records in postgres

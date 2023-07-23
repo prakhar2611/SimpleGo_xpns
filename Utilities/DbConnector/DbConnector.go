@@ -144,7 +144,7 @@ func SendDataToPostgres(req []Models.ExpenseBO) bool {
 	return false
 }
 
-func SendHDFCToPostgres(req []*Models.B64decodedResponse) []string {
+func SendHDFCToPostgres(req []Models.B64decodedResponse) []string {
 	var failure []string
 	if GetDbConnection() {
 		for _, x := range req {

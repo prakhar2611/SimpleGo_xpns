@@ -32,13 +32,14 @@ type ExpenseBO struct {
 
 type B64decodedResponse struct {
 	gorm.Model
-	AmountDebited string    `json:"amount_debited"`
+	AmountDebited float64   `json:"amount_debited"`
 	Date          string    `json:"date"`
 	ETime         time.Time `json:"etime"`
 	TransactionId string    `json:"msgId" gorm:"unique"`
 	ToAccount     string    `json:"to_vpa"`
 	Category      string    `json:"category"`
 	Label         string    `json:"label"`
+	UserId        string    `json:"UserId"`
 }
 
 type GetEncodedDataReq struct {

@@ -1,21 +1,23 @@
 package Workflows
 
 import (
-	"context"
-	"encoding/json"
-	"fmt"
-	"io"
-	"log"
-	"strconv"
-	"strings"
-	"time"
-
 	Model "SimpleGo_xpns/Models"
 	"SimpleGo_xpns/Utilities"
 	Executer "SimpleGo_xpns/Utilities/APIExecuter"
 	dbConnector "SimpleGo_xpns/Utilities/DbConnector"
+	"context"
+	"encoding/base64"
+	"encoding/json"
+	"fmt"
+	"io"
+	"log"
+	"regexp"
+	"strconv"
+	"strings"
+	"time"
 
 	"github.com/360EntSecGroup-Skylar/excelize"
+	"github.com/PuerkitoBio/goquery"
 	"github.com/spf13/viper"
 )
 
@@ -158,4 +160,74 @@ func SendPayloadToExcel(token string, payload []Model.ExpenseBO) bool {
 	//calling google sheet api to create speardsheet and write excel on it
 
 	return true
+}
+
+func getContentsFromBody(ebd string) (string, string, string) {
+	amountDebitedRegex := regexp.MustCompile(`Rs.\d*`)
+	toVPARegex := regexp.MustCompile(`VPA.+?on`)
+	dateRegex := regexp.MustCompile(`\d{2}-\d{2}-\d{2}`)
+
+	amountDebited := amountDebitedRegex.FindString(ebd)
+	toVPA := toVPARegex.FindString(ebd)
+	date := dateRegex.FindString(ebd)
+
+	if date == "" {
+		date = "None"
+	}
+	if toVPA != "" {
+		toVPA = strings.TrimPrefix(toVPA, "VPA ")
+		toVPA = strings.TrimSuffix(toVPA, " on")
+	} else {
+		toVPA = "None"
+	}
+	if amountDebited != "" {
+		amountDebited = strings.TrimPrefix(amountDebited, "Rs.")
+	} else {
+		amountDebited = "None"
+	}
+
+	return date, toVPA, amountDebited
+}
+
+func getEmailBody(codedBody string) (string, string, string) {
+	data := strings.ReplaceAll(codedBody, "-", "+")
+	data = strings.ReplaceAll(data, "_", "/")
+
+	decodedData, err := base64.StdEncoding.DecodeString(data)
+	if err != nil {
+		log.Fatal("Error decoding base64 data:", err)
+	}
+
+	doc, err := goquery.NewDocumentFromReader(strings.NewReader(string(decodedData)))
+	if err != nil {
+		log.Fatal("Error parsing HTML:", err)
+	}
+
+	emailBody := doc.Find("td.td").First().Text()
+	date, toVPA, amountDebited := getContentsFromBody(emailBody)
+	return date, toVPA, amountDebited
+}
+
+func ExtractBodyFromEncodedData(codedRelevantJSON []Model.GetEncodedDataReq) []Model.B64decodedResponse {
+	var decodedExtractedInfo []Model.B64decodedResponse
+
+	for _, message := range codedRelevantJSON {
+		data := message.MsgEncodedData
+
+		date, toVPA, amountDebited := getEmailBody(data)
+		var amount float64
+		if amountDebited != "" {
+			amount, _ = strconv.ParseFloat(amountDebited, 64)
+		}
+		d := Model.B64decodedResponse{
+			TransactionId: message.MsgId,
+			Date:          date,
+			ToAccount:     toVPA,
+			AmountDebited: amount,
+		}
+
+		decodedExtractedInfo = append(decodedExtractedInfo, d)
+	}
+
+	return decodedExtractedInfo
 }
