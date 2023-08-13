@@ -18,9 +18,11 @@ import (
 func RegisterDataAPI(r chi.Router) {
 	r.Post("/api/v1/sendData", SendToMongo) //not using it for external use, same is implemented in the workflow check there
 	r.Get("/api/v1/getExpense", GetXpns)
+	r.Get("/api/v1/getXpnsByVpa", GetXpnsByVpa)
 	//r.Get("/api/v1/getExpense", )
 	r.Post("/api/v1/importFromFile", ImportFormFile)
 	r.Post("/api/v1/Update", UpdateCategory)
+	r.Post("/api/v1/UpdateVpaMapping", UpdateVpaMapping)
 	//r.Get("/api/v1/GetFromEmailByMonth", GetGmailByMonth)
 }
 
@@ -114,6 +116,86 @@ func GetXpns(w http.ResponseWriter, r *http.Request) {
 		response.JSON(w, http.StatusUnauthorized, Models.BaseResponse{Status: false, Error: "Unauthorized, please login"})
 		return
 	}
+}
+
+func GetXpnsByVpa(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("content-type", "application/json")
+	response := Utilities.GetResponse()
+	var xpnsData []Models.VpaMapping
+	var label string
+	var limit string
+	var offset string
+
+	var token string
+	if r.Header.Get("token") != "" {
+		token = r.Header.Get("token")
+	}
+
+	if r.URL.Query().Get("label") != "" {
+		label = r.URL.Query().Get("label")
+	} else {
+		response.JSON(w, http.StatusBadRequest, Models.BaseResponse{Status: false, Error: "Please provide label to fetch"})
+		return
+	}
+
+	if r.URL.Query().Get("limit") != "" {
+		limit = r.URL.Query().Get("limit")
+	} else {
+		response.JSON(w, http.StatusBadRequest, Models.BaseResponse{Status: false, Error: "Please provide label to fetch"})
+		return
+	}
+
+	if r.URL.Query().Get("limit") != "" {
+		offset = r.URL.Query().Get("offset")
+	} else {
+		response.JSON(w, http.StatusBadRequest, Models.BaseResponse{Status: false, Error: "Please provide label to fetch"})
+		return
+	}
+
+	if token != "" {
+		user := workflow.GetUserInfo(token)
+		if user != nil && label == "HDFC" {
+			xpnsData = dbConnector.GetGroupedVpa(limit, offset)
+		}
+		if len(xpnsData) > 0 {
+			response.JSON(w, http.StatusOK, xpnsData)
+			return
+		}
+		response.JSON(w, http.StatusInternalServerError, Models.BaseResponse{Status: false, Error: "Unable to fecth the data"})
+		return
+	} else {
+		response.JSON(w, http.StatusUnauthorized, Models.BaseResponse{Status: false, Error: "Unauthorized, please login"})
+		return
+	}
+}
+
+func UpdateVpaMapping(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("content-type", "application/json")
+	response := Utilities.GetResponse()
+
+	var token string
+
+	var request *Models.UpdatecategoryPayload
+	err := json.NewDecoder(r.Body).Decode(&request)
+	if r.Header.Get("token") != "" && request != nil {
+		token = r.Header.Get("token")
+	} else {
+		response.JSON(w, http.StatusBadRequest, Models.BaseResponse{Status: false, Error: "Bad request"})
+		return
+	}
+	if err == nil {
+		user := workflow.GetUserInfo(token)
+		if user != nil {
+			//mapping vpa with
+			x := workflow.UpdateVpaMapping(request, user.ID)
+			if x {
+				response.JSON(w, http.StatusOK, "TRANSACTION_VPA_LABEL_UPDATED")
+				return
+			}
+		}
+	}
+	response.JSON(w, http.StatusInternalServerError, Models.BaseResponse{Status: false, Error: "TRANSACTION_VPA_LABEL_FAILURE"})
+	return
 }
 
 //latest used code to db

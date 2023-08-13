@@ -2,7 +2,6 @@ package main
 
 import (
 	Controller "SimpleGo_xpns/Controllers"
-	service "SimpleGo_xpns/Services"
 	utilities "SimpleGo_xpns/Utilities"
 	"flag"
 	"fmt"
@@ -43,7 +42,7 @@ func main() {
 	})
 	r.Route("/", func(r chi.Router) {
 		Controller.RegisterUserAPI(r)
-		service.RegisterGoogleAPIs(r)
+		Controller.RegisterGoogleAPIs(r)
 	})
 	log.Println(http.ListenAndServe("0.0.0.0:"+*port, r))
 }

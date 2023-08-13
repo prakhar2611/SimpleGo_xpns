@@ -231,3 +231,19 @@ func ExtractBodyFromEncodedData(codedRelevantJSON []Model.GetEncodedDataReq) []M
 
 	return decodedExtractedInfo
 }
+
+func UpdateVpaMapping(request *Model.UpdatecategoryPayload, userId string) bool {
+
+	//two things to do
+	// 1. update the vpa mapped in the Db
+	// 2. update the vpa in the vpa mapping db - maitaning for fun
+
+	//1
+	//dbConnector.PushVPAMAppingToDb(request)
+	success, _ := dbConnector.UpdateVPATxnLevel(request, userId)
+	if success {
+		return true
+
+	}
+	return false
+}

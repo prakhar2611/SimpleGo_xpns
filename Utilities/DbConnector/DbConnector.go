@@ -33,34 +33,34 @@ func GetDbConnection() bool {
 			db = dbInstance
 			//will us it when creating our own token with diff login system - user token
 			//db.AutoMigrate(&Models.User{}, &Models.UserToken{}, &Models.GmailExcelThreadSnapShot{}, &Models.ExpenseBO{}, &Models.B64decodedResponse{})
-			db.AutoMigrate(&Models.User{}, &Models.ExpenseBO{}, &Models.B64decodedResponse{})
+			db.AutoMigrate(&Models.User{}, &Models.ExpenseBO{}, &Models.B64decodedResponse{}, &Models.VpaMapping{}, &Models.VpaMappingDbo{})
 			return true
 		}
 	}
 	return true
 }
 
-func InsertUserData(user Models.User) bool {
+func InsertUserData(user Models.User) int {
 	if GetDbConnection() {
 		var dbUser Models.User
 		resp := db.Where("Email = ?", user.Email).First(&dbUser)
 		if resp.RowsAffected > 0 {
 			//UpdateAuthToken(user, token) skipping saving the auth token now, saving in local cache
-			return true
+			return 2
 			//user already inserted in the db no need to insert user token
 		} else {
 			resp = db.Create(&user)
 			if resp != nil && resp.RowsAffected > 0 {
 				//UpdateAuthToken(user, token)
-				return true
+				return 1
 			} else {
 				fmt.Printf("Getting error while inserting user data : %v", user.Email)
-				return false
+				return 0
 			}
 		}
 
 	}
-	return false
+	return 0
 }
 
 func UpdateCategory(payload *Models.UpdatecategoryPayload) (bool, []string) {
@@ -160,7 +160,7 @@ func SendHDFCToPostgres(req []Models.B64decodedResponse) []string {
 func GetXpnsFromPostgres(from string, to string, userId string) []*Models.B64decodedResponse {
 	if GetDbConnection() {
 		var data []*Models.B64decodedResponse
-		resp := db.Where("e_time >= ? AND e_time <= ? AND to_account != '' AND userId = ? ", from, to, userId).Order("e_time DESC").Find(&data)
+		resp := db.Where("e_time >= ? AND e_time <= ? AND to_account != '' AND user_id = ? ", from, to, userId).Order("e_time DESC").Find(&data)
 		if resp != nil && resp.RowsAffected > 0 {
 			return data
 		} else if resp.RowsAffected == 0 {
@@ -168,6 +168,71 @@ func GetXpnsFromPostgres(from string, to string, userId string) []*Models.B64dec
 		}
 	}
 	return nil
+}
+
+func GetGroupedVpa(limit string, offset string) []Models.VpaMapping {
+	if GetDbConnection() {
+		id := 1
+		var data []Models.VpaMapping
+		rows, err := db.Raw("select to_account as vpa ,SUM(amount_debited) as totalAmount ,count(*) as totalTxn, label, category from b64decoded_responses group by to_account,label, category order by totaltxn DESC limit ? offset ?", limit, offset).Rows()
+		defer rows.Close()
+		if err == nil {
+			for rows.Next() {
+				var raw Models.VpaMapping
+				rows.Scan(&raw.Vpa, &raw.TotalAmount, &raw.TotalTxn, &raw.Label, &raw.Category)
+				raw.Id = id
+				id += 1
+				data = append(data, raw)
+			}
+		}
+		if len(data) > 0 {
+			return data
+		} else if len(data) == 0 {
+			return nil
+		}
+	}
+	return nil
+
+}
+
+func PushVPAMappingToDb(req []Models.VpaMapping) int {
+	var count int
+	if GetDbConnection() {
+		for _, x := range req {
+			resp := db.Create(&x)
+			if resp != nil && resp.RowsAffected == 0 {
+				count += 1
+			}
+		}
+	}
+	return count
+}
+
+func PushVPAMAppingToDb(req []Models.VpaMappingDbo) int {
+	var count int
+	if GetDbConnection() {
+		for _, x := range req {
+			resp := db.Create(&x)
+			if resp != nil && resp.RowsAffected == 0 {
+				count += 1
+			}
+		}
+	}
+	return count
+}
+
+func UpdateVPATxnLevel(payload *Models.UpdatecategoryPayload, userId string) (bool, []string) {
+	var failureMsgId []string
+	if GetDbConnection() {
+		for key, value := range *&payload.Data {
+			r := db.Model(&Models.B64decodedResponse{}).Where("to_account= ? and user_id = ?", key, userId).Updates(map[string]interface{}{"category": value.Category, "label": value.Label})
+			if r.RowsAffected == 0 {
+				failureMsgId = append(failureMsgId, key)
+			}
+		}
+		return true, failureMsgId
+	}
+	return false, failureMsgId
 }
 
 // func InsertUserData(user *Models.User) bool {

@@ -13,10 +13,10 @@
     },
     "Postgresql" : 
     {
-        "host" : "localhost",
+        "host" : "192.168.0.102",
         "userName" : "postgres",
-        "password" : "DedSec@2611",
-        "dbName" :  "xpns"
+        "password" : "postgres",
+        "dbName" :  "raspi"
     },
     "Postgresql_prod" : 
     {
