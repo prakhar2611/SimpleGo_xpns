@@ -71,3 +71,12 @@ func FetchAllThread(label string, srv *gmail.Service) bool {
 	}
 	return true
 }
+
+// func DoBasicAnalytic(data Models.B64decodedResponse) bool {
+// 	data := dbConnector.GetVpaMapping()
+// 	if len(data) > 0 {
+// 		dbConnector.AssignVpaLabels(data)
+// 		return true
+// 	}
+// 	return false
+// }

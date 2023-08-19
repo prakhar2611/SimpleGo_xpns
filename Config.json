@@ -13,6 +13,13 @@
     },
     "Postgresql" : 
     {
+        "host" : "192.168.1.5",
+        "userName" : "postgres",
+        "password" : "postgres",
+        "dbName" :  "raspi"
+    },
+    "Postgresql_prod" : 
+    {
         "host" : "xpnsdb1.cvatnnmljapj.ap-southeast-1.rds.amazonaws.com",
         "userName" : "mahatma",
         "password" : "hoepicker",

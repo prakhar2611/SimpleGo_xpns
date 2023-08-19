@@ -2,7 +2,6 @@ package main
 
 import (
 	Controller "SimpleGo_xpns/Controllers"
-	service "SimpleGo_xpns/Services"
 	utilities "SimpleGo_xpns/Utilities"
 	"flag"
 	"fmt"
@@ -27,7 +26,7 @@ func main() {
 
 	r.Use(cors.Handler(cors.Options{
 		// AllowedOrigins:   []string{"https://foo.com"}, // Use this to allow specific origin hosts
-		AllowedOrigins: []string{"https://*", "http://*", "http://localhost:3000"},
+		AllowedOrigins: []string{"https://*", "http://*", "http://localhost:3001"},
 		// AllowOriginFunc:  func(r *http.Request, origin string) bool { return true },
 		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
 		AllowedHeaders:   []string{"Accept", "Authorization", "Content-Type", "X-CSRF-Token", "token"},
@@ -41,9 +40,13 @@ func main() {
 
 		Controller.RegisterDataAPI(r)
 	})
+	r.Route("/docs", func(r chi.Router) {
+
+		Controller.RegisterDocsAPI(r)
+	})
 	r.Route("/", func(r chi.Router) {
 		Controller.RegisterUserAPI(r)
-		service.RegisterGoogleAPIs(r)
+		Controller.RegisterGoogleAPIs(r)
 	})
 	log.Println(http.ListenAndServe("0.0.0.0:"+*port, r))
 }

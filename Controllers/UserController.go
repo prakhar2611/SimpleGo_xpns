@@ -32,6 +32,7 @@ func GetUserProfile(w http.ResponseWriter, r *http.Request) {
 			userProfile.Email = user.Email
 			userProfile.Picture = user.Picture
 			userProfile.Name = user.Name
+			userProfile.Userid = user.ID
 
 			response.JSON(w, http.StatusOK, userProfile)
 			return
@@ -45,9 +46,6 @@ func GetUserProfile(w http.ResponseWriter, r *http.Request) {
 		response.JSON(w, http.StatusBadRequest, userProfile)
 		return
 	}
-	// response.JSON(w, http.StatusAccepted, "working")
-	// return
-
 }
 
 func SignIn(w http.ResponseWriter, r *http.Request) {
@@ -59,11 +57,19 @@ func SignIn(w http.ResponseWriter, r *http.Request) {
 	if err == nil {
 		user := workflow.GetUserInfo(token.AccessToken)
 		if user != nil {
-			if dbConnector.InsertUserData(*user) && Utilities.SetKey(user.ID, token) {
+			if dbConnector.InsertUserData(*user) != 0 && Utilities.SetKey(user.ID, token) {
 				//returning valid response to channel for further use of token
 				Utilities.GetKeyValue(user.ID)
-				response.JSON(w, http.StatusOK, Models.BaseResponse{Status: true, Error: ""})
-				return
+				//0 - error
+				//1 - new user
+				//2 - existing
+				if dbConnector.InsertUserData(*user) == 2 {
+					response.JSON(w, http.StatusOK, Models.BaseResponse{Status: true, IsNewUser: false, Error: ""})
+					return
+				} else {
+					response.JSON(w, http.StatusOK, Models.BaseResponse{Status: true, IsNewUser: true, Error: ""})
+					return
+				}
 			}
 		}
 	}

@@ -30,14 +30,34 @@ type ExpenseBO struct {
 	Mode            string
 }
 
+type VpaMappingDbo struct {
+	gorm.Model
+	UserId   string `json:"userId"`
+	Vpa      string `json:"vpa" gorm:"unique"` //making it unique
+	Category string `json:"category"`
+	Label    string `json:"label"`
+}
+
 type B64decodedResponse struct {
 	gorm.Model
-	AmountDebited string    `json:"amount_debited"`
+	AmountDebited float64   `json:"amount_debited"`
 	Date          string    `json:"date"`
 	ETime         time.Time `json:"etime"`
 	TransactionId string    `json:"msgId" gorm:"unique"`
 	ToAccount     string    `json:"to_vpa"`
 	Category      string    `json:"category"`
+	Label         string    `json:"label"`
+	UserId        string    `json:"UserId"`
+}
+
+type VpaMapping struct {
+	Id          int    `json:"id"`
+	Vpa         string `json:"vpa"`
+	TotalAmount int64  `json:"totalAmount"`
+	TotalTxn    int64  `json:"totalTxn"`
+	Category    string `json:"category"`
+	Label       string `json:"label"`
+	UserId      string `json:"UserId"`
 }
 
 type GetEncodedDataReq struct {
@@ -46,8 +66,9 @@ type GetEncodedDataReq struct {
 }
 
 type BaseResponse struct {
-	Status bool   `json:"status"`
-	Error  string `json:"error"`
+	IsNewUser bool   `json:"isNewUser"`
+	Status    bool   `json:"status"`
+	Error     string `json:"error"`
 }
 
 type GmailExcelThreadSnapShot struct {
