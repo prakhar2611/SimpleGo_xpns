@@ -33,7 +33,7 @@ func GetDbConnection() bool {
 			db = dbInstance
 			//will us it when creating our own token with diff login system - user token
 			//db.AutoMigrate(&Models.User{}, &Models.UserToken{}, &Models.GmailExcelThreadSnapShot{}, &Models.ExpenseBO{}, &Models.B64decodedResponse{})
-			db.AutoMigrate(&Models.User{}, &Models.ExpenseBO{}, &Models.B64decodedResponse{}, &Models.VpaMapping{}, &Models.VpaMappingDbo{})
+			db.AutoMigrate(&Models.User{}, &Models.ExpenseBO{}, &Models.B64decodedResponse{}, &Models.VpaMapping{}, &Models.VpaMappingDbo{}, &Models.DocsMeta{})
 			return true
 		}
 	}
@@ -278,4 +278,41 @@ func Migrate(m interface{}) {
 		//We have an error
 		fmt.Printf(d.Error())
 	}
+}
+
+func CreateDoc(payload *Models.DocsMeta) bool {
+	if GetDbConnection() {
+
+		resp := db.Create(&payload)
+		if resp != nil && resp.RowsAffected > 0 {
+			return true
+		} else {
+			fmt.Printf("Getting error while inserting user data : %v", payload.ID)
+			return false
+		}
+
+	}
+	return false
+}
+
+func GetAllDoc() []Models.DocsMeta {
+	if GetDbConnection() {
+		var data []Models.DocsMeta
+
+		rows, err := db.Raw("select id,meta_Data,user_id,title,created_at from docs_meta").Rows()
+		defer rows.Close()
+		if err == nil {
+			for rows.Next() {
+				var raw Models.DocsMeta
+				rows.Scan(&raw.ID, &raw.MetaData, &raw.UserId, &raw.Title, &raw.CreatedAt)
+				data = append(data, raw)
+			}
+		}
+		if len(data) > 0 {
+			return data
+		} else if len(data) == 0 {
+			return nil
+		}
+	}
+	return nil
 }

@@ -26,7 +26,7 @@ func main() {
 
 	r.Use(cors.Handler(cors.Options{
 		// AllowedOrigins:   []string{"https://foo.com"}, // Use this to allow specific origin hosts
-		AllowedOrigins: []string{"https://*", "http://*", "http://localhost:3000"},
+		AllowedOrigins: []string{"https://*", "http://*", "http://localhost:3001"},
 		// AllowOriginFunc:  func(r *http.Request, origin string) bool { return true },
 		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
 		AllowedHeaders:   []string{"Accept", "Authorization", "Content-Type", "X-CSRF-Token", "token"},
@@ -39,6 +39,10 @@ func main() {
 	r.Route("/expense", func(r chi.Router) {
 
 		Controller.RegisterDataAPI(r)
+	})
+	r.Route("/docs", func(r chi.Router) {
+
+		Controller.RegisterDocsAPI(r)
 	})
 	r.Route("/", func(r chi.Router) {
 		Controller.RegisterUserAPI(r)
