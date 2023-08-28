@@ -280,37 +280,69 @@ func Migrate(m interface{}) {
 	}
 }
 
-func CreateDoc(payload *Models.DocsMeta) bool {
+func CreateDoc(payload *Models.DocsMeta, userId string) bool {
 	if GetDbConnection() {
-
-		resp := db.Create(&payload)
-		if resp != nil && resp.RowsAffected > 0 {
-			return true
+		var dbDoc Models.DocsMeta
+		resp := db.Where("title = ? and user_id = ? and folder = ?", payload.Title, userId, payload.Folder).First(&dbDoc)
+		if resp.RowsAffected > 0 {
+			resp := db.Model(Models.DocsMeta{}).Where("title = ? and user_id = ? and folder = ?", payload.Title, userId, payload.Folder).Update("meta_data", payload.MetaData)
+			if resp != nil && resp.RowsAffected > 0 {
+				return true
+			} else {
+				fmt.Printf("Getting error while Updating user data : %v", payload.ID)
+				return false
+			}
 		} else {
-			fmt.Printf("Getting error while inserting user data : %v", payload.ID)
-			return false
-		}
+			resp := db.Create(&payload)
+			if resp != nil && resp.RowsAffected > 0 {
+				return true
+			} else {
+				fmt.Printf("Getting error while inserting user data : %v", payload.ID)
+				return false
+			}
 
+		}
 	}
 	return false
 }
 
-func GetAllDoc() []Models.DocsMeta {
+func GetAllDoc(user_id string) []Models.DocsMeta {
 	if GetDbConnection() {
 		var data []Models.DocsMeta
 
-		rows, err := db.Raw("select id,meta_Data,user_id,title,created_at from docs_meta").Rows()
+		// rows, err := db.Raw("select id,meta_Data,user_id,title,folder,created_at from docs_meta").Rows()
+
+		rows, err := db.Raw("select id,user_id,title,folder,created_at from docs_meta where user_id = ?", user_id).Rows()
 		defer rows.Close()
 		if err == nil {
 			for rows.Next() {
 				var raw Models.DocsMeta
-				rows.Scan(&raw.ID, &raw.MetaData, &raw.UserId, &raw.Title, &raw.CreatedAt)
+				rows.Scan(&raw.ID, &raw.UserId, &raw.Title, &raw.Folder, &raw.CreatedAt)
 				data = append(data, raw)
 			}
 		}
 		if len(data) > 0 {
 			return data
 		} else if len(data) == 0 {
+			return nil
+		}
+	}
+	return nil
+}
+
+func GetDocMeta(request Models.GetDocMetaRequest, user_id string) *Models.DocsMeta {
+	if GetDbConnection() {
+		var raw Models.DocsMeta
+		rows, err := db.Raw("select id,meta_Data,user_id,title,folder,created_at from docs_meta where title = ? and user_id = ? and folder = ?", request.Title, user_id, request.Folder).Rows()
+		defer rows.Close()
+		if err == nil {
+			for rows.Next() {
+				rows.Scan(&raw.ID, &raw.MetaData, &raw.UserId, &raw.Title, &raw.Folder, &raw.CreatedAt)
+			}
+		}
+		if len(raw.Title) > 0 {
+			return &raw
+		} else {
 			return nil
 		}
 	}

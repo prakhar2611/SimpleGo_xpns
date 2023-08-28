@@ -8,6 +8,7 @@ require (
 	github.com/aleksiumish/in-memory-cache v0.0.0-20221207194228-7a96563e9c52
 	github.com/go-chi/chi v1.5.4
 	github.com/go-chi/cors v1.2.1
+	github.com/google/uuid v1.1.2
 	github.com/spf13/viper v1.8.1
 	github.com/unrolled/render v1.5.0
 	github.com/xuri/excelize/v2 v2.7.0
@@ -21,6 +22,7 @@ require (
 
 require (
 	cloud.google.com/go/compute/metadata v0.2.0 // indirect
+	github.com/ahmetalpbalkan/go-linq v3.0.0+incompatible // indirect
 	github.com/andybalholm/cascadia v1.3.1 // indirect
 	github.com/fsnotify/fsnotify v1.6.0 // indirect
 	github.com/golang/groupcache v0.0.0-20210331224755-41bb18bfe9da // indirect
