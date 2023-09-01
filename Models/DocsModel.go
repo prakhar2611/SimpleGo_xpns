@@ -39,5 +39,6 @@ type Directory struct {
 type Children struct {
 	Title  string `json:"title"`
 	Meta   string `json:"meta"`
+	Folder string `json:"folder"`
 	IsLeaf bool   `json:"isLeaf"`
 }

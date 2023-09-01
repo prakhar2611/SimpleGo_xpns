@@ -138,10 +138,12 @@ func mapDirectory(data []Models.DocsMeta) []Models.Directory {
 	for key, value := range f {
 		var d Models.Directory
 		var cd []Models.Children
+
 		for _, x := range value {
 			var c Models.Children
 			c.Title = x
 			c.IsLeaf = true
+			c.Folder = key
 			cd = append(cd, c)
 		}
 		d.Title = key
