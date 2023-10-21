@@ -6,6 +6,8 @@ import (
 	"gorm.io/gorm"
 )
 
+//db Models
+
 type PayloadToMongo struct {
 	BaseResponse
 	Data  []interface{} `json:"data"`
@@ -30,12 +32,11 @@ type ExpenseBO struct {
 	Mode            string
 }
 
-type VpaMappingDbo struct {
+type PocketsMappingDbo struct {
 	gorm.Model
-	UserId   string `json:"userId"`
-	Vpa      string `json:"vpa" gorm:"unique"` //making it unique
-	Category string `json:"category"`
-	Label    string `json:"label"`
+	UserId string   `json:"userId"`
+	Pocket string   `json:"pocket" gorm:"unique"` //making it unique
+	Labels []string `json:"labels"`
 }
 
 type B64decodedResponse struct {
@@ -45,10 +46,12 @@ type B64decodedResponse struct {
 	ETime         time.Time `json:"etime"`
 	TransactionId string    `json:"msgId" gorm:"unique"`
 	ToAccount     string    `json:"to_vpa"`
-	Category      string    `json:"category"`
+	Pocket        string    `json:"pocket"`
 	Label         string    `json:"label"`
 	UserId        string    `json:"UserId"`
 }
+
+//REST models
 
 type VpaMapping struct {
 	Id          int    `json:"id"`

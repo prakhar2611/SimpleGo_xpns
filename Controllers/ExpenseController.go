@@ -23,6 +23,8 @@ func RegisterDataAPI(r chi.Router) {
 	r.Post("/api/v1/importFromFile", ImportFormFile)
 	r.Post("/api/v1/Update", UpdateCategory)
 	r.Post("/api/v1/UpdateVpaMapping", UpdateVpaMapping)
+	r.Post("/api/v1/UpdatePockets", UpdatePockets)
+
 	//r.Get("/api/v1/GetFromEmailByMonth", GetGmailByMonth)
 }
 
@@ -195,6 +197,35 @@ func UpdateVpaMapping(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	response.JSON(w, http.StatusInternalServerError, Models.BaseResponse{Status: false, Error: "TRANSACTION_VPA_LABEL_FAILURE"})
+	return
+}
+
+func UpdatePockets(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("content-type", "application/json")
+	response := Utilities.GetResponse()
+
+	var token string
+
+	var request *Models.UpdatePocketsPayload
+	err := json.NewDecoder(r.Body).Decode(&request)
+	if r.Header.Get("token") != "" && request != nil {
+		token = r.Header.Get("token")
+	} else {
+		response.JSON(w, http.StatusBadRequest, Models.BaseResponse{Status: false, Error: "Bad request"})
+		return
+	}
+	if err == nil {
+		user := workflow.GetUserInfo(token)
+		if user != nil {
+			//mapping vpa with
+			x := workflow.UpdatePockets(request, user.ID)
+			if x {
+				response.JSON(w, http.StatusOK, "TRANSACTION_POCKETS_UPDATED")
+				return
+			}
+		}
+	}
+	response.JSON(w, http.StatusInternalServerError, Models.BaseResponse{Status: false, Error: "TRANSACTION_POCKETS_FAILURE"})
 	return
 }
 

@@ -33,7 +33,7 @@ func GetDbConnection() bool {
 			db = dbInstance
 			//will us it when creating our own token with diff login system - user token
 			//db.AutoMigrate(&Models.User{}, &Models.UserToken{}, &Models.GmailExcelThreadSnapShot{}, &Models.ExpenseBO{}, &Models.B64decodedResponse{})
-			db.AutoMigrate(&Models.User{}, &Models.ExpenseBO{}, &Models.B64decodedResponse{}, &Models.VpaMapping{}, &Models.VpaMappingDbo{}, &Models.DocsMeta{})
+			db.AutoMigrate(&Models.User{}, &Models.ExpenseBO{}, &Models.B64decodedResponse{}, &Models.VpaMapping{}, &Models.PocketsMappingDbo{}, &Models.DocsMeta{})
 			return true
 		}
 	}
@@ -157,6 +157,7 @@ func SendHDFCToPostgres(req []Models.B64decodedResponse) []string {
 	return failure
 }
 
+//db helper to get the xpns from the db
 func GetXpnsFromPostgres(from string, to string, userId string) []*Models.B64decodedResponse {
 	if GetDbConnection() {
 		var data []*Models.B64decodedResponse
@@ -170,6 +171,7 @@ func GetXpnsFromPostgres(from string, to string, userId string) []*Models.B64dec
 	return nil
 }
 
+//db helper to get the group VPA based on top number of resp vpa txn and total amount value
 func GetGroupedVpa(limit string, offset string) []Models.VpaMapping {
 	if GetDbConnection() {
 		id := 1
@@ -208,19 +210,52 @@ func PushVPAMappingToDb(req []Models.VpaMapping) int {
 	return count
 }
 
-func PushVPAMAppingToDb(req []Models.VpaMappingDbo) int {
-	var count int
+// db helper to create new pocket else update the initial value based on distinct user
+func CreateAndUpdatePocketDb(payload *Models.UpdatePocketsPayload, userId string) bool {
+
 	if GetDbConnection() {
-		for _, x := range req {
-			resp := db.Create(&x)
-			if resp != nil && resp.RowsAffected == 0 {
-				count += 1
+		for _, req := range payload.Data {
+			req.UserId = userId
+			resp := db.Where("pocket = ? && userId = ? ", req.Pocket, userId).First(&Models.PocketsMappingDbo{})
+			if resp.RowsAffected > 0 {
+				resp := db.Model(&Models.PocketsMappingDbo{}).Where("pocket= ? and user_id = ?", req.Pocket, userId).Updates(map[string]interface{}{"labels": req.Labels})
+				if resp != nil && resp.RowsAffected > 0 {
+					return true
+				} else {
+					fmt.Printf("Getting error while updating pocket lables, pocket : %v, user id : %v", req.Pocket, req.UserId)
+					return false
+				}
+			} else {
+				resp := db.Create(req)
+				if resp != nil && resp.RowsAffected > 0 {
+					return true
+				} else {
+					fmt.Printf("Getting error while Creating new pocket, pocket : %v, user id : %v", req.Pocket, req.UserId)
+					return false
+				}
 			}
 		}
+
 	}
-	return count
+	return false
 }
 
+//db helper to update txns across the table with pocket
+func UpdatePocketTxnLevel(payload *Models.UpdatePocketsPayload, userId string) (bool, []string) {
+	var failureMsgId []string
+	if GetDbConnection() {
+		for _, req := range payload.Data {
+			r := db.Model(&Models.B64decodedResponse{}).Where("label in ? and user_id = ?", req.Labels, userId).Updates(map[string]interface{}{"pocket": req.Pocket})
+			if r.RowsAffected == 0 {
+				failureMsgId = append(failureMsgId, req.Pocket)
+			}
+		}
+		return true, failureMsgId
+	}
+	return false, failureMsgId
+}
+
+//db helper to update txns across the table with same VPA name
 func UpdateVPATxnLevel(payload *Models.UpdatecategoryPayload, userId string) (bool, []string) {
 	var failureMsgId []string
 	if GetDbConnection() {

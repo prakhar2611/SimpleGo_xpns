@@ -49,3 +49,7 @@ type categoryL struct {
 	Category string `json:"category"`
 	Label    string `json:"label"`
 }
+
+type UpdatePocketsPayload struct {
+	Data []PocketsMappingDbo `json:"data"`
+}

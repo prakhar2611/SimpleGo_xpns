@@ -17,12 +17,13 @@ type UserToken struct {
 
 type User struct {
 	gorm.Model
-	ID        string `gorm:"nullable"`
-	Email     string `gorm:"index;unique"`
-	Name      string
-	Picture   string
-	Locale    string
-	Address   string
-	CreatedAt time.Time
-	UpdatedAt time.Time
+	ID         string `gorm:"nullable"`
+	Email      string `gorm:"index;unique"`
+	Name       string
+	Picture    string
+	Locale     string
+	Address    string
+	LastSynced string
+	CreatedAt  time.Time
+	UpdatedAt  time.Time
 }

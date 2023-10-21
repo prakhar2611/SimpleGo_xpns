@@ -110,6 +110,7 @@ func SBIparser(FileName string, userid string, str io.Reader) []Model.ExpenseBO 
 	return req
 }
 
+//DEPRECATED
 func GetDataForbase64(payload []Model.GetEncodedDataReq) []*Model.B64decodedResponse {
 	var req Executer.APIRequest
 
@@ -241,9 +242,19 @@ func UpdateVpaMapping(request *Model.UpdatecategoryPayload, userId string) bool 
 	//1
 	//dbConnector.PushVPAMAppingToDb(request)
 	success, _ := dbConnector.UpdateVPATxnLevel(request, userId)
-	if success {
-		return true
 
+	return success
+}
+
+func UpdatePockets(request *Model.UpdatePocketsPayload, userId string) bool {
+	//creating poket and labels relation in db for particular user
+	s := dbConnector.CreateAndUpdatePocketDb(request, userId)
+	if s {
+		fmt.Printf("Pockets Updated")
+		//post success updating the txn with the pockets
+		s, _ := dbConnector.UpdatePocketTxnLevel(request, userId)
+
+		return s
 	}
-	return false
+	return s
 }

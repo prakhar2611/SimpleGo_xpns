@@ -142,6 +142,9 @@ func SyncMail(w http.ResponseWriter, r *http.Request) {
 		for i, f := range decodedData {
 			decodedData[i].ETime = timestampmap[f.TransactionId]
 			decodedData[i].UserId = userId
+			// to do check the data with fed pocket and mapping by
+			decodedData[i].Pocket = "NA"
+			decodedData[i].Label = "NA"
 		}
 
 		//send data to db with merging SBI and HDFC records in postgres
