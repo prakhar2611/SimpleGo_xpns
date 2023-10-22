@@ -33,7 +33,7 @@ type UserXpnsData struct {
 }
 
 type UpdatecategoryPayload struct {
-	Data map[string]categoryL `json:"data"`
+	Data map[string]string `json:"data"`
 }
 
 type UpdateCategoryResponse struct {
@@ -45,11 +45,11 @@ type SyncUpResp struct {
 	FailedTxns []string `json:"failedTxns"`
 }
 
-type categoryL struct {
-	Category string `json:"category"`
-	Label    string `json:"label"`
+type UpdatePocketsPayload struct {
+	Data map[string][]string `json:"data"`
 }
 
-type UpdatePocketsPayload struct {
-	Data []PocketsMappingDbo `json:"data"`
+type VPALabelPocketMap struct {
+	Pockets map[string][]string
+	Labels  []string
 }

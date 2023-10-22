@@ -33,7 +33,7 @@ func GetDbConnection() bool {
 			db = dbInstance
 			//will us it when creating our own token with diff login system - user token
 			//db.AutoMigrate(&Models.User{}, &Models.UserToken{}, &Models.GmailExcelThreadSnapShot{}, &Models.ExpenseBO{}, &Models.B64decodedResponse{})
-			db.AutoMigrate(&Models.User{}, &Models.ExpenseBO{}, &Models.B64decodedResponse{}, &Models.VpaMapping{}, &Models.PocketsMappingDbo{}, &Models.DocsMeta{})
+			db.AutoMigrate(&Models.User{}, &Models.ExpenseBO{}, &Models.B64decodedResponse{}, &Models.VpaMapping{}, &Models.VPALabelPocketDbo{}, &Models.DocsMeta{})
 			return true
 		}
 	}
@@ -63,19 +63,19 @@ func InsertUserData(user Models.User) int {
 	return 0
 }
 
-func UpdateCategory(payload *Models.UpdatecategoryPayload) (bool, []string) {
-	var failureMsgId []string
-	if GetDbConnection() {
-		for key, value := range *&payload.Data {
-			r := db.Model(&Models.B64decodedResponse{}).Where("transaction_id = ?", key).Updates(map[string]interface{}{"category": value.Category, "label": value.Label})
-			if r.RowsAffected == 0 {
-				failureMsgId = append(failureMsgId, key)
-			}
-		}
-		return true, failureMsgId
-	}
-	return false, failureMsgId
-}
+// func UpdateCategory(payload *Models.UpdatecategoryPayload) (bool, []string) {
+// 	var failureMsgId []string
+// 	if GetDbConnection() {
+// 		for key, value := range *&payload.Data {
+// 			r := db.Model(&Models.B64decodedResponse{}).Where("transaction_id = ?", key).Updates(map[string]interface{}{"category": value.Category, "label": value.Label})
+// 			if r.RowsAffected == 0 {
+// 				failureMsgId = append(failureMsgId, key)
+// 			}
+// 		}
+// 		return true, failureMsgId
+// 	}
+// 	return false, failureMsgId
+// }
 
 func UpdateAuthToken(user Models.User, token Models.UserToken) bool {
 	var dbToken Models.UserToken
@@ -176,12 +176,13 @@ func GetGroupedVpa(limit string, offset string) []Models.VpaMapping {
 	if GetDbConnection() {
 		id := 1
 		var data []Models.VpaMapping
-		rows, err := db.Raw("select to_account as vpa ,SUM(amount_debited) as totalAmount ,count(*) as totalTxn, label, category from b64decoded_responses group by to_account,label, category order by totaltxn DESC limit ? offset ?", limit, offset).Rows()
+		qury := fmt.Sprintf("with cte as ( select to_account as vpa,SUM(amount_debited) as totalamount ,count(*) as totaltxn from b64decoded_responses group by b64decoded_responses.to_account )select a.vpa,a.totalamount, a.totaltxn, b.label from   cte a left join vpa_label_pocket_dbos b on a.vpa = b.vpa order by 3 desc limit 15 OFFSET 0")
+		rows, err := db.Raw(qury).Rows()
 		defer rows.Close()
 		if err == nil {
 			for rows.Next() {
 				var raw Models.VpaMapping
-				rows.Scan(&raw.Vpa, &raw.TotalAmount, &raw.TotalTxn, &raw.Label, &raw.Category)
+				rows.Scan(&raw.Vpa, &raw.TotalAmount, &raw.TotalTxn, &raw.Label)
 				raw.Id = id
 				id += 1
 				data = append(data, raw)
@@ -194,6 +195,50 @@ func GetGroupedVpa(limit string, offset string) []Models.VpaMapping {
 		}
 	}
 	return nil
+
+}
+
+//db helper to get the group VPA based on top number of resp vpa txn and total amount value
+func GetVPALabelPocketMap(userId string) *Models.VPALabelPocketMap {
+	var data *Models.VPALabelPocketMap
+
+	if GetDbConnection() {
+		pockets := make(map[string][]string)
+		var labels []string
+		qury := fmt.Sprintf("Select vpa, label, pocket from vpa_label_pocket_dbos where user_id = ? ")
+		rows, err := db.Raw(qury, userId).Rows()
+		defer rows.Close()
+		if err == nil {
+			for rows.Next() {
+				var vpa, label, pocket string
+				rows.Scan(&vpa, &label, &pocket)
+
+				_, ok := pockets[pocket]
+				if ok {
+					if !Utilities.ElementExists(pockets[pocket], label) {
+						pockets[pocket] = append(pockets[pocket], label)
+					}
+				} else {
+					pockets[pocket] = []string{}
+					pockets[pocket] = append(pockets[pocket], label)
+
+				}
+
+				if !Utilities.ElementExists(labels, label) {
+
+					labels = append(labels, label)
+
+				}
+
+			}
+			data = &Models.VPALabelPocketMap{
+				Labels:  labels,
+				Pockets: pockets,
+			}
+		}
+
+	}
+	return data
 
 }
 
@@ -210,64 +255,87 @@ func PushVPAMappingToDb(req []Models.VpaMapping) int {
 	return count
 }
 
-// db helper to create new pocket else update the initial value based on distinct user
+// // db helper to create new pocket else update the initial value based on distinct user
 func CreateAndUpdatePocketDb(payload *Models.UpdatePocketsPayload, userId string) bool {
 
 	if GetDbConnection() {
-		for _, req := range payload.Data {
-			req.UserId = userId
-			resp := db.Where("pocket = ? && userId = ? ", req.Pocket, userId).First(&Models.PocketsMappingDbo{})
-			if resp.RowsAffected > 0 {
-				resp := db.Model(&Models.PocketsMappingDbo{}).Where("pocket= ? and user_id = ?", req.Pocket, userId).Updates(map[string]interface{}{"labels": req.Labels})
-				if resp != nil && resp.RowsAffected > 0 {
-					return true
-				} else {
-					fmt.Printf("Getting error while updating pocket lables, pocket : %v, user id : %v", req.Pocket, req.UserId)
-					return false
-				}
-			} else {
-				resp := db.Create(req)
-				if resp != nil && resp.RowsAffected > 0 {
-					return true
-				} else {
-					fmt.Printf("Getting error while Creating new pocket, pocket : %v, user id : %v", req.Pocket, req.UserId)
-					return false
+		if payload != nil {
+			for pocket, labels := range payload.Data {
+
+				if len(labels) > 0 {
+					for _, label := range labels {
+						resp := db.Model(&Models.VPALabelPocketDbo{}).Where("label= ? and user_id = ?", label, userId).Updates(map[string]interface{}{"pocket": pocket})
+						if resp == nil || resp.RowsAffected == 0 {
+							fmt.Printf("Getting error while updating pocket lables, pocket : %v, user id : %v", label, userId)
+						}
+					}
 				}
 			}
+			return true
 		}
+		return false
 
 	}
 	return false
 }
 
 //db helper to update txns across the table with pocket
-func UpdatePocketTxnLevel(payload *Models.UpdatePocketsPayload, userId string) (bool, []string) {
-	var failureMsgId []string
-	if GetDbConnection() {
-		for _, req := range payload.Data {
-			r := db.Model(&Models.B64decodedResponse{}).Where("label in ? and user_id = ?", req.Labels, userId).Updates(map[string]interface{}{"pocket": req.Pocket})
-			if r.RowsAffected == 0 {
-				failureMsgId = append(failureMsgId, req.Pocket)
-			}
-		}
-		return true, failureMsgId
-	}
-	return false, failureMsgId
-}
+// func UpdatePocketTxnLevel(payload *Models.UpdatePocketsPayload, userId string) (bool, []string) {
+// 	var failureMsgId []string
+// 	if GetDbConnection() {
+// 		for _, req := range payload.Data {
+// 			r := db.Model(&Models.B64decodedResponse{}).Where("label in ? and user_id = ?", req.Labels, userId).Updates(map[string]interface{}{"pocket": req.Pocket})
+// 			if r.RowsAffected == 0 {
+// 				failureMsgId = append(failureMsgId, req.Pocket)
+// 			}
+// 		}
+// 		return true, failureMsgId
+// 	}
+// 	return false, failureMsgId
+// }
 
-//db helper to update txns across the table with same VPA name
-func UpdateVPATxnLevel(payload *Models.UpdatecategoryPayload, userId string) (bool, []string) {
-	var failureMsgId []string
+// //db helper to update txns across the table with same VPA name
+// func UpdateVPATxnLevel(payload *Models.UpdatecategoryPayload, userId string) (bool, []string) {
+// 	var failureMsgId []string
+// 	if GetDbConnection() {
+// 		for key, value := range *&payload.Data {
+// 			r := db.Model(&Models.B64decodedResponse{}).Where("to_account= ? and user_id = ?", key, userId).Updates(map[string]interface{}{"label": value})
+// 			if r.RowsAffected == 0 {
+// 				failureMsgId = append(failureMsgId, key)
+// 			}
+// 		}
+// 		return true, failureMsgId
+// 	}
+// 	return false, failureMsgId
+// }
+
+//db helper to insert VPA and label
+func InsertVPAlabelMapping(payload []*Models.VPALabelPocketDbo, userId string) bool {
+
 	if GetDbConnection() {
-		for key, value := range *&payload.Data {
-			r := db.Model(&Models.B64decodedResponse{}).Where("to_account= ? and user_id = ?", key, userId).Updates(map[string]interface{}{"category": value.Category, "label": value.Label})
-			if r.RowsAffected == 0 {
-				failureMsgId = append(failureMsgId, key)
+		for _, req := range payload {
+			req.UserId = userId
+			req.Pocket = "NA"
+			resp := db.Where("vpa = ? and user_id = ? ", req.Vpa, userId).First(&Models.VPALabelPocketDbo{})
+			if resp.RowsAffected > 0 {
+				resp := db.Model(&Models.VPALabelPocketDbo{}).Where("vpa= ? and user_id = ?", req.Vpa, userId).Updates(map[string]interface{}{"label": req.Label})
+				if resp != nil && resp.RowsAffected > 0 {
+				} else {
+					fmt.Printf("Getting error while updating vpa lable, vpa : %v, user id : %v", req.Vpa, req.UserId)
+				}
+			} else {
+				resp := db.Create(req)
+				if resp != nil && resp.RowsAffected > 0 {
+				} else {
+					fmt.Printf("Getting error while Creating new vpa label, vpa : %v, user id : %v", req.Vpa, req.UserId)
+				}
 			}
 		}
-		return true, failureMsgId
+
+	} else {
+		return false
 	}
-	return false, failureMsgId
+	return true
 }
 
 // func InsertUserData(user *Models.User) bool {

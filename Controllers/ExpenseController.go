@@ -19,9 +19,11 @@ func RegisterDataAPI(r chi.Router) {
 	r.Post("/api/v1/sendData", SendToMongo) //not using it for external use, same is implemented in the workflow check there
 	r.Get("/api/v1/getExpense", GetXpns)
 	r.Get("/api/v1/getXpnsByVpa", GetXpnsByVpa)
+	r.Get("/api/v1/getVpaLabelPocketMapping", GetVPALabelPocketMap)
+
 	//r.Get("/api/v1/getExpense", )
 	r.Post("/api/v1/importFromFile", ImportFormFile)
-	r.Post("/api/v1/Update", UpdateCategory)
+	// r.Post("/api/v1/Update", UpdateCategory)
 	r.Post("/api/v1/UpdateVpaMapping", UpdateVpaMapping)
 	r.Post("/api/v1/UpdatePockets", UpdatePockets)
 
@@ -55,33 +57,33 @@ func SendToMongo(w http.ResponseWriter, r *http.Request) {
 	response.JSON(w, http.StatusOK, fmt.Sprintf("Data Imported !!"))
 }
 
-func UpdateCategory(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("content-type", "application/json")
-	response := Utilities.GetResponse()
+// func UpdateCategory(w http.ResponseWriter, r *http.Request) {
+// 	w.Header().Set("content-type", "application/json")
+// 	response := Utilities.GetResponse()
 
-	var token string
+// 	var token string
 
-	var request *Models.UpdatecategoryPayload
-	err := json.NewDecoder(r.Body).Decode(&request)
-	if r.Header.Get("token") != "" && request != nil {
-		token = r.Header.Get("token")
-	} else {
-		response.JSON(w, http.StatusBadRequest, Models.BaseResponse{Status: false, Error: "Bad request"})
-		return
-	}
-	if err == nil {
-		user := workflow.GetUserInfo(token)
-		if user != nil {
-			x, failureIds := dbConnector.UpdateCategory(request)
-			if x {
-				response.JSON(w, http.StatusOK, Models.UpdateCategoryResponse{FailureMsgId: failureIds})
-				return
-			}
-		}
-	}
-	response.JSON(w, http.StatusInternalServerError, Models.BaseResponse{Status: false, Error: "Unable to serve the req"})
-	return
-}
+// 	var request *Models.UpdatecategoryPayload
+// 	err := json.NewDecoder(r.Body).Decode(&request)
+// 	if r.Header.Get("token") != "" && request != nil {
+// 		token = r.Header.Get("token")
+// 	} else {
+// 		response.JSON(w, http.StatusBadRequest, Models.BaseResponse{Status: false, Error: "Bad request"})
+// 		return
+// 	}
+// 	if err == nil {
+// 		user := workflow.GetUserInfo(token)
+// 		if user != nil {
+// 			x, failureIds := dbConnector.UpdateCategory(request)
+// 			if x {
+// 				response.JSON(w, http.StatusOK, Models.UpdateCategoryResponse{FailureMsgId: failureIds})
+// 				return
+// 			}
+// 		}
+// 	}
+// 	response.JSON(w, http.StatusInternalServerError, Models.BaseResponse{Status: false, Error: "Unable to serve the req"})
+// 	return
+// }
 
 func GetXpns(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("content-type", "application/json")
@@ -171,6 +173,33 @@ func GetXpnsByVpa(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+func GetVPALabelPocketMap(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("content-type", "application/json")
+	response := Utilities.GetResponse()
+	var xpnsData *Models.VPALabelPocketMap
+
+	var token string
+	if r.Header.Get("token") != "" {
+		token = r.Header.Get("token")
+	}
+
+	if token != "" {
+		user := workflow.GetUserInfo(token)
+		if user != nil {
+			xpnsData = dbConnector.GetVPALabelPocketMap(user.ID)
+		}
+		if xpnsData != nil {
+			response.JSON(w, http.StatusOK, xpnsData)
+			return
+		}
+		response.JSON(w, http.StatusInternalServerError, Models.BaseResponse{Status: false, Error: "Unable to fecth the data"})
+		return
+	} else {
+		response.JSON(w, http.StatusUnauthorized, Models.BaseResponse{Status: false, Error: "Unauthorized, please login"})
+		return
+	}
+}
+
 func UpdateVpaMapping(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("content-type", "application/json")
 	response := Utilities.GetResponse()
@@ -207,7 +236,13 @@ func UpdatePockets(w http.ResponseWriter, r *http.Request) {
 	var token string
 
 	var request *Models.UpdatePocketsPayload
-	err := json.NewDecoder(r.Body).Decode(&request)
+-	err := json.NewDecoder(r.Body).Decode(&request)
+
+	if err != nil {
+		response.JSON(w, http.StatusBadRequest, Models.BaseResponse{Status: false, Error: "Bad request"})
+		return
+	}
+
 	if r.Header.Get("token") != "" && request != nil {
 		token = r.Header.Get("token")
 	} else {

@@ -241,20 +241,25 @@ func UpdateVpaMapping(request *Model.UpdatecategoryPayload, userId string) bool 
 
 	//1
 	//dbConnector.PushVPAMAppingToDb(request)
-	success, _ := dbConnector.UpdateVPATxnLevel(request, userId)
 
-	return success
+	var payload []*Model.VPALabelPocketDbo
+
+	for key, value := range request.Data {
+		p := &Model.VPALabelPocketDbo{
+			UserId: userId,
+			Vpa:    key,
+			Label:  value,
+		}
+		payload = append(payload, p)
+	}
+	s := dbConnector.InsertVPAlabelMapping(payload, userId)
+	return s
+
 }
 
 func UpdatePockets(request *Model.UpdatePocketsPayload, userId string) bool {
 	//creating poket and labels relation in db for particular user
 	s := dbConnector.CreateAndUpdatePocketDb(request, userId)
-	if s {
-		fmt.Printf("Pockets Updated")
-		//post success updating the txn with the pockets
-		s, _ := dbConnector.UpdatePocketTxnLevel(request, userId)
 
-		return s
-	}
 	return s
 }

@@ -32,11 +32,12 @@ type ExpenseBO struct {
 	Mode            string
 }
 
-type PocketsMappingDbo struct {
+type VPALabelPocketDbo struct {
 	gorm.Model
-	UserId string   `json:"userId"`
-	Pocket string   `json:"pocket" gorm:"unique"` //making it unique
-	Labels []string `json:"labels"`
+	UserId string `json:"userId"`
+	Vpa    string `json:"pocket"`
+	Label  string `json:"labels"`
+	Pocket string
 }
 
 type B64decodedResponse struct {
@@ -58,7 +59,7 @@ type VpaMapping struct {
 	Vpa         string `json:"vpa"`
 	TotalAmount int64  `json:"totalAmount"`
 	TotalTxn    int64  `json:"totalTxn"`
-	Category    string `json:"category"`
+	Pocket      string `json:"pocket"`
 	Label       string `json:"label"`
 	UserId      string `json:"UserId"`
 }

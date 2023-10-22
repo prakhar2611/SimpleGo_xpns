@@ -143,6 +143,7 @@ func SyncMail(w http.ResponseWriter, r *http.Request) {
 			decodedData[i].ETime = timestampmap[f.TransactionId]
 			decodedData[i].UserId = userId
 			// to do check the data with fed pocket and mapping by
+
 			decodedData[i].Pocket = "NA"
 			decodedData[i].Label = "NA"
 		}
