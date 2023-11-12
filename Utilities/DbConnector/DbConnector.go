@@ -451,3 +451,26 @@ func GetDocMeta(request Models.GetDocMetaRequest, user_id string) *Models.DocsMe
 	}
 	return nil
 }
+
+func GetLastSyncData(userId string) string {
+	dateString := ""
+	if GetDbConnection() {
+		var lastCreatedAt time.Time
+
+		rows, err := db.Raw("select created_at from b64decoded_responses WHERE user_id = ? order by created_at DESC limit 1", userId).Rows()
+		defer rows.Close()
+		if err == nil {
+			for rows.Next() {
+				rows.Scan(&lastCreatedAt)
+			}
+		}
+		dateString = lastCreatedAt.Format("2006-01-02")
+
+	}
+	if dateString == "" {
+		currentTime := time.Now()
+		oneYearAgo := currentTime.AddDate(-1, 0, 0)
+		dateString = oneYearAgo.Format("2006-01-02")
+	}
+	return dateString
+}

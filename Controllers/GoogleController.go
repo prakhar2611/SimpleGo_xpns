@@ -100,12 +100,14 @@ func SyncMail(w http.ResponseWriter, r *http.Request) {
 		response.JSON(w, http.StatusBadRequest, Models.BaseResponse{Status: false, Error: "Please provide label to fetch"})
 		return
 	}
+
 	from = r.URL.Query().Get("from")
 	to = r.URL.Query().Get("to")
 
 	userId := workflow.VerifyIdToken(accessToken)
 	if userId != "" {
 		//token := dbConnector.GetUserToken(accessToken)
+
 		token := Utilities.GetKeyValue(userId)
 		client = oauthConfig.Client(context.Background(), token.(*oauth2.Token))
 
@@ -125,9 +127,14 @@ func SyncMail(w http.ResponseWriter, r *http.Request) {
 
 		if from != "" && to != "" {
 			query = fmt.Sprintf("label:%v after:%v before:%v", label, from, to)
+
 		} else {
 			//fetch all
-			query = fmt.Sprintf("label:%v", label)
+			//getting the last updated dated from the Db and sync from lastcreated - 2 --> now
+			from = dbConnector.GetLastSyncData(userId)
+			to = time.Now().Format("2006-01-02")
+			query = fmt.Sprintf("label:%v after:%v before:%v", label, from, to)
+			//query = fmt.Sprintf("label:%v", label)
 		}
 
 		threadservice.Q(query)

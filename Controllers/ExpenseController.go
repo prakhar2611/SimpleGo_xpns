@@ -236,7 +236,7 @@ func UpdatePockets(w http.ResponseWriter, r *http.Request) {
 	var token string
 
 	var request *Models.UpdatePocketsPayload
--	err := json.NewDecoder(r.Body).Decode(&request)
+	err := json.NewDecoder(r.Body).Decode(&request)
 
 	if err != nil {
 		response.JSON(w, http.StatusBadRequest, Models.BaseResponse{Status: false, Error: "Bad request"})
