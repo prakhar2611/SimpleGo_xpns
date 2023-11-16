@@ -56,8 +56,9 @@ func SignIn(w http.ResponseWriter, r *http.Request) {
 	err := json.NewDecoder(r.Body).Decode(&token)
 	if err == nil {
 		user := workflow.GetUserInfo(token.AccessToken)
+		isCache := Utilities.SetKey(user.ID, token)
 		if user != nil {
-			if dbConnector.InsertUserData(*user) != 0 && Utilities.SetKey(user.ID, token) {
+			if dbConnector.InsertUserData(*user) != 0 && isCache {
 				//returning valid response to channel for further use of token
 				Utilities.GetKeyValue(user.ID)
 				//0 - error

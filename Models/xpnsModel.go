@@ -47,8 +47,6 @@ type B64decodedResponse struct {
 	ETime         time.Time `json:"etime"`
 	TransactionId string    `json:"msgId" gorm:"unique"`
 	ToAccount     string    `json:"to_vpa"`
-	Pocket        string    `json:"pocket"`
-	Label         string    `json:"label"`
 	UserId        string    `json:"UserId"`
 }
 

@@ -467,7 +467,7 @@ func GetLastSyncData(userId string) string {
 		dateString = lastCreatedAt.Format("2006-01-02")
 
 	}
-	if dateString == "" {
+	if dateString == "0001-01-01" {
 		currentTime := time.Now()
 		oneYearAgo := currentTime.AddDate(-1, 0, 0)
 		dateString = oneYearAgo.Format("2006-01-02")
