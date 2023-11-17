@@ -172,11 +172,18 @@ func GetXpnsFromPostgres(from string, to string, userId string) []*Models.B64dec
 }
 
 //db helper to get the group VPA based on top number of resp vpa txn and total amount value
-func GetGroupedVpa(limit string, offset string) []Models.VpaMapping {
+func GetGroupedVpa(limit string, offset string, type_s string) []Models.VpaMapping {
 	if GetDbConnection() {
 		id := 1
+		var qury string
 		var data []Models.VpaMapping
-		qury := fmt.Sprintf("with cte as ( select to_account as vpa,SUM(amount_debited) as totalamount ,count(*) as totaltxn from b64decoded_responses group by b64decoded_responses.to_account )select a.vpa,a.totalamount, a.totaltxn, b.label from   cte a left join vpa_label_pocket_dbos b on a.vpa = b.vpa order by 3 desc limit 15 OFFSET 0")
+
+		if type_s == "CONFIGURE" {
+			qury = fmt.Sprintf("select b64decoded_responses.to_account as vpa, SUM(b64decoded_responses.amount_debited) as totalamount, count(*) as totaltxn, vpa_label_pocket_dbos.label from b64decoded_responses LEFT JOIN vpa_label_pocket_dbos on b64decoded_responses.to_account = vpa_label_pocket_dbos.vpa WHERE vpa_label_pocket_dbos.label is null group by b64decoded_responses.to_account, vpa_label_pocket_dbos.label order by totaltxn DESC limit 15 OFFSET 0")
+		} else if type_s == "ANALYTICS" {
+			qury = fmt.Sprintf("with cte as( select to_account as vpa,SUM(amount_debited) as totalamount ,count(*) as totaltxn from b64decoded_responses group by b64decoded_responses.to_account)select a.vpa,a.totalamount, a.totaltxn, b.label from   cte a left join vpa_label_pocket_dbos b on a.vpa = b.vpa where b.label is not null order by 3 desc ")
+		}
+
 		rows, err := db.Raw(qury).Rows()
 		defer rows.Close()
 		if err == nil {

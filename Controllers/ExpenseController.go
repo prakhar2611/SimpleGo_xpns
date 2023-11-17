@@ -129,6 +129,7 @@ func GetXpnsByVpa(w http.ResponseWriter, r *http.Request) {
 	var label string
 	var limit string
 	var offset string
+	var type_s string
 
 	var token string
 	if r.Header.Get("token") != "" {
@@ -156,10 +157,17 @@ func GetXpnsByVpa(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if r.URL.Query().Get("type") != "" {
+		type_s = r.URL.Query().Get("type")
+	} else {
+		response.JSON(w, http.StatusBadRequest, Models.BaseResponse{Status: false, Error: "Please provide type as CONFIGURE or ANALYTICS"})
+		return
+	}
+
 	if token != "" {
 		user := workflow.GetUserInfo(token)
 		if user != nil && label == "HDFC" {
-			xpnsData = dbConnector.GetGroupedVpa(limit, offset)
+			xpnsData = dbConnector.GetGroupedVpa(limit, offset, type_s)
 		}
 		if len(xpnsData) > 0 {
 			response.JSON(w, http.StatusOK, xpnsData)
