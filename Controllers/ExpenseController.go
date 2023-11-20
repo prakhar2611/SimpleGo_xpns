@@ -167,7 +167,7 @@ func GetXpnsByVpa(w http.ResponseWriter, r *http.Request) {
 	if token != "" {
 		user := workflow.GetUserInfo(token)
 		if user != nil && label == "HDFC" {
-			xpnsData = dbConnector.GetGroupedVpa(limit, offset, type_s)
+			xpnsData = dbConnector.GetGroupedVpa(limit, offset, type_s, user.ID)
 		}
 		if len(xpnsData) > 0 {
 			response.JSON(w, http.StatusOK, xpnsData)
