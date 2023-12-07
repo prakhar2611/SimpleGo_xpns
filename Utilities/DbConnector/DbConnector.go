@@ -482,42 +482,42 @@ func GetLastSyncData(userId string) string {
 	return dateString
 }
 
-func CreateSplits(request Models.CreateSplitRequest, user_id string, amount float64) bool {
-	if GetDbConnection() {
-		for _, user := range request.Users {
-			for _, id := range request.Txns {
-				rows, err := db.Raw("UPDATE b64decoded_responses SET amount = ? WHERE transaction_id = ? and user_id = ? ", amount, id, user_id).Rows()
-				if err != nil {
-					break
-				}
-				//creating new transaction for the same record
-				req := Models.B64decodedResponse{
-					TransactionId: fmt.Sprintf("s_%v", id),
-					UserId:        user,
-					Date:          time.Now().Format(),
-				}
+// func CreateSplits(request Models.CreateSplitRequest, user_id string, amount float64) bool {
+// 	if GetDbConnection() {
+// 		for _, user := range request.Users {
+// 			for _, id := range request.Txns {
+// 				rows, err := db.Raw("UPDATE b64decoded_responses SET amount = ? WHERE transaction_id = ? and user_id = ? ", amount, id, user_id).Rows()
+// 				if err != nil {
+// 					break
+// 				}
+// 				//creating new transaction for the same record
+// 				req := Models.B64decodedResponse{
+// 					TransactionId: fmt.Sprintf("s_%v", id),
+// 					UserId:        user,
+// 					Date:          time.Now().Format(),
+// 				}
 
-				rows, err = db.Raw("UPDATE b64decoded_responses SET amount = ? WHERE transaction_id = ? and user_id = ? ", amount, id, user_id).Rows()
-				if err != nil {
-					break
-				}
+// 				rows, err = db.Raw("UPDATE b64decoded_responses SET amount = ? WHERE transaction_id = ? and user_id = ? ", amount, id, user_id).Rows()
+// 				if err != nil {
+// 					break
+// 				}
 
-			}
-		}
+// 			}
+// 		}
 
-		var raw Models.DocsMeta
-		rows, err := db.Raw("select id,meta_Data,user_id,title,folder,created_at from docs_meta where title = ? and user_id = ? and folder = ?", request.Title, user_id, request.Folder).Rows()
-		defer rows.Close()
-		if err == nil {
-			for rows.Next() {
-				rows.Scan(&raw.ID, &raw.MetaData, &raw.UserId, &raw.Title, &raw.Folder, &raw.CreatedAt)
-			}
-		}
-		if len(raw.Title) > 0 {
-			return &raw
-		} else {
-			return false
-		}
-	}
-	return false
-}
+// 		var raw Models.DocsMeta
+// 		rows, err := db.Raw("select id,meta_Data,user_id,title,folder,created_at from docs_meta where title = ? and user_id = ? and folder = ?", request.Title, user_id, request.Folder).Rows()
+// 		defer rows.Close()
+// 		if err == nil {
+// 			for rows.Next() {
+// 				rows.Scan(&raw.ID, &raw.MetaData, &raw.UserId, &raw.Title, &raw.Folder, &raw.CreatedAt)
+// 			}
+// 		}
+// 		if len(raw.Title) > 0 {
+// 			return &raw
+// 		} else {
+// 			return false
+// 		}
+// 	}
+// 	return false
+// }

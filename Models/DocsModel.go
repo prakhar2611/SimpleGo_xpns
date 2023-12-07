@@ -31,6 +31,11 @@ type GetDocMetaRequest struct {
 	Folder string `json:"folder"`
 }
 
+type CreateSplitRequest struct {
+	Txns  []string `json:"txns"`
+	Users []string `json:"users"`
+}
+
 type Directory struct {
 	Title    string     `json:"title"`
 	Children []Children `json:"children"`
