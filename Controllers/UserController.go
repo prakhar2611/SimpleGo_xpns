@@ -13,8 +13,8 @@ import (
 )
 
 func RegisterUserAPI(r chi.Router) {
-	r.Get("/api/User/v1/GetUserProfile", GetUserProfile)
-	r.Post("/api/User/v1/Signin", SignIn)
+	r.Get("/User/v1/GetUserProfile", GetUserProfile)
+	r.Post("/User/v1/Signin", SignIn)
 }
 
 func GetUserProfile(w http.ResponseWriter, r *http.Request) {

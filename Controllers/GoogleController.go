@@ -108,8 +108,11 @@ func SyncMail(w http.ResponseWriter, r *http.Request) {
 	if userId != "" {
 		//token := dbConnector.GetUserToken(accessToken)
 
-		token := Utilities.GetKeyValue(userId)
-		client = oauthConfig.Client(context.Background(), token.(*oauth2.Token))
+		//token := Utilities.GetKeyValue(userId)
+		var token = *&oauth2.Token{
+			AccessToken: accessToken,
+		}
+		client = oauthConfig.Client(context.Background(), &token)
 
 		ctx := context.Background()
 		var k *gmail.ListThreadsResponse

@@ -39,14 +39,15 @@ func main() {
 	r.Route("/expense", func(r chi.Router) {
 
 		Controller.RegisterDataAPI(r)
+		r.Route("/api", func(r chi.Router) {
+			Controller.RegisterUserAPI(r)
+			Controller.RegisterGoogleAPIs(r)
+		})
 	})
 	r.Route("/docs", func(r chi.Router) {
 
 		Controller.RegisterDocsAPI(r)
 	})
-	r.Route("/", func(r chi.Router) {
-		Controller.RegisterUserAPI(r)
-		Controller.RegisterGoogleAPIs(r)
-	})
+
 	log.Println(http.ListenAndServe("0.0.0.0:"+*port, r))
 }
