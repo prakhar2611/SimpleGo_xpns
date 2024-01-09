@@ -124,7 +124,7 @@ func GetXpns(w http.ResponseWriter, r *http.Request) {
 
 func GetXpnsByVpa(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("content-type", "application/json")
-		response := Utilities.GetResponse()
+	response := Utilities.GetResponse()
 	var xpnsData []Models.VpaMapping
 	var label string
 	var limit string
@@ -228,7 +228,7 @@ func UpdateVpaMapping(w http.ResponseWriter, r *http.Request) {
 			//mapping vpa with
 			x := workflow.UpdateVpaMapping(request, user.ID)
 			if x {
-				response.JSON(w, http.StatusOK, "TRANSACTION_VPA_LABEL_UPDATED")
+				response.JSON(w, http.StatusOK, Models.BaseResponse{Status: true, Error: ""})
 				return
 			}
 		}
@@ -263,7 +263,7 @@ func UpdatePockets(w http.ResponseWriter, r *http.Request) {
 			//mapping vpa with
 			x := workflow.UpdatePockets(request, user.ID)
 			if x {
-				response.JSON(w, http.StatusOK, "TRANSACTION_POCKETS_UPDATED")
+				response.JSON(w, http.StatusOK, Models.BaseResponse{Status: true, Error: ""})
 				return
 			}
 		}
