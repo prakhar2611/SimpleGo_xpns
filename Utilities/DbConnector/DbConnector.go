@@ -471,7 +471,8 @@ func GetLastSyncData(userId string) string {
 				rows.Scan(&lastCreatedAt)
 			}
 		}
-		dateString = lastCreatedAt.Format("2006-01-02")
+		//reducing a day as fall back
+		dateString = lastCreatedAt.AddDate(0, 0, -1).Format("2006-01-02")
 
 	}
 	if dateString == "0001-01-01" {
@@ -495,6 +496,8 @@ func GetLastSyncData(userId string) string {
 // 					TransactionId: fmt.Sprintf("s_%v", id),
 // 					UserId:        user,
 // 					Date:          time.Now().Format(),
+// 					AmountDebited: amount,
+
 // 				}
 
 // 				rows, err = db.Raw("UPDATE b64decoded_responses SET amount = ? WHERE transaction_id = ? and user_id = ? ", amount, id, user_id).Rows()

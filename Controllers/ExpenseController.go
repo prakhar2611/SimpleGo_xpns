@@ -124,7 +124,7 @@ func GetXpns(w http.ResponseWriter, r *http.Request) {
 
 func GetXpnsByVpa(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("content-type", "application/json")
-	response := Utilities.GetResponse()
+		response := Utilities.GetResponse()
 	var xpnsData []Models.VpaMapping
 	var label string
 	var limit string

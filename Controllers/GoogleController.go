@@ -135,7 +135,7 @@ func SyncMail(w http.ResponseWriter, r *http.Request) {
 			//fetch all
 			//getting the last updated dated from the Db and sync from lastcreated - 2 --> now
 			from = dbConnector.GetLastSyncData(userId)
-			to = time.Now().Format("2006-01-02")
+			to = time.Now().AddDate(0, 0, 1).Format("2006-01-02")
 			query = fmt.Sprintf("label:%v after:%v before:%v", label, from, to)
 			//query = fmt.Sprintf("label:%v", label)
 		}
@@ -163,7 +163,7 @@ func SyncMail(w http.ResponseWriter, r *http.Request) {
 			failedTxns := dbConnector.SendHDFCToPostgres(decodedData)
 			if len(failedTxns) > 0 {
 				baseresp.Status = true
-				baseresp.Error = ""
+				baseresp.Error = "FEW_FAILED"
 
 				response.JSON(w, http.StatusOK, Models.SyncUpResp{
 					BaseResponse: baseresp,
@@ -173,7 +173,7 @@ func SyncMail(w http.ResponseWriter, r *http.Request) {
 			} else {
 				//if workflow.DoBasicAnalytic(decodedData) {
 				baseresp.Status = true
-				baseresp.Error = "Synced !"
+				baseresp.Error = ""
 				response.JSON(w, http.StatusOK, Models.SyncUpResp{
 					BaseResponse: baseresp, FailedTxns: []string{},
 				})
@@ -185,7 +185,7 @@ func SyncMail(w http.ResponseWriter, r *http.Request) {
 
 	} else {
 		baseresp.Status = false
-		baseresp.Error = "Uanle to sync the transactions"
+		baseresp.Error = "Unable to sync the transactions"
 		response.JSON(w, http.StatusOK, Models.SyncUpResp{
 			BaseResponse: baseresp, FailedTxns: []string{},
 		})
