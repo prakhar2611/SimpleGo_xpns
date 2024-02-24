@@ -26,6 +26,7 @@ func RegisterDataAPI(r chi.Router) {
 	// r.Post("/api/v1/Update", UpdateCategory)
 	r.Post("/api/v1/UpdateVpaMapping", UpdateVpaMapping)
 	r.Post("/api/v1/UpdatePockets", UpdatePockets)
+	r.Post("/api/v1/SendDataToPostG", SendDataToPostG)
 
 	//r.Get("/api/v1/GetFromEmailByMonth", GetGmailByMonth)
 }
@@ -269,6 +270,79 @@ func UpdatePockets(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	response.JSON(w, http.StatusInternalServerError, Models.BaseResponse{Status: false, Error: "TRANSACTION_POCKETS_FAILURE"})
+	return
+}
+
+func SendDataToPostG(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("content-type", "application/json")
+	response := Utilities.GetResponse()
+	baseresp := Models.BaseResponse{}
+	var bank string
+	var token, label string
+
+	var request []Models.B64decodedResponse
+	err := json.NewDecoder(r.Body).Decode(&request)
+
+	if err != nil {
+		response.JSON(w, http.StatusBadRequest, Models.BaseResponse{Status: false, Error: "Bad request"})
+		return
+	}
+	if r.URL.Query().Get("label") != "" {
+		label = r.URL.Query().Get("label")
+	} else {
+		response.JSON(w, http.StatusBadRequest, Models.BaseResponse{Status: false, Error: "Please provide Bank"})
+		return
+	}
+
+	if r.Header.Get("token") != "" && request != nil {
+		token = r.Header.Get("token")
+	} else {
+		response.JSON(w, http.StatusBadRequest, Models.BaseResponse{Status: false, Error: "INVALID_TOKEN"})
+		return
+	}
+	userId := workflow.VerifyIdToken(token)
+
+	if label != "SBI" {
+		baseresp.Status = false
+		baseresp.Error = "Supports only SBI"
+		response.JSON(w, http.StatusOK, Models.SyncUpResp{
+			BaseResponse: baseresp, FailedTxns: []string{},
+		})
+		return
+	} else {
+		bank = "SBI"
+	}
+
+	if userId != "" && err == nil && len(request) > 0 {
+
+		for i, _ := range request {
+			request[i].Bank = bank
+		}
+
+		failedTxns := dbConnector.SendHDFCToPostgres(request)
+		if len(failedTxns) > 0 {
+			baseresp.Status = true
+			baseresp.Error = "FEW_FAILED"
+
+			response.JSON(w, http.StatusOK, Models.SyncUpResp{
+				BaseResponse: baseresp,
+				FailedTxns:   failedTxns,
+			})
+			return
+		} else {
+			//if workflow.DoBasicAnalytic(decodedData) {
+			baseresp.Status = true
+			baseresp.Error = ""
+			response.JSON(w, http.StatusOK, Models.SyncUpResp{
+				BaseResponse: baseresp, FailedTxns: []string{},
+			})
+			return
+			//}
+
+		}
+
+	}
+	response.JSON(w, http.StatusInternalServerError, Models.BaseResponse{Status: false, Error: "TRANSACTION_SHEET_FAILURE"})
 	return
 }
 

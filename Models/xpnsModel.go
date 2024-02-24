@@ -48,6 +48,7 @@ type B64decodedResponse struct {
 	TransactionId string    `json:"msgId" gorm:"unique"`
 	ToAccount     string    `json:"to_vpa"`
 	UserId        string    `json:"UserId"`
+	Bank          string    `json:"bank"`
 }
 
 //REST models

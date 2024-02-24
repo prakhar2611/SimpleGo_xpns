@@ -87,7 +87,7 @@ func SyncMail(w http.ResponseWriter, r *http.Request) {
 	var client *http.Client
 	response := Utilities.GetResponse()
 	baseresp := Models.BaseResponse{}
-	var label, from, to, query string
+	var label, from, to, query, bank string
 	var accessToken string
 
 	if r.Header.Get("token") != "" {
@@ -103,6 +103,19 @@ func SyncMail(w http.ResponseWriter, r *http.Request) {
 
 	from = r.URL.Query().Get("from")
 	to = r.URL.Query().Get("to")
+
+	if label == "HDFC" {
+		label = "<alerts@hdfcbank.net>"
+		bank = "HDFC"
+
+	} else {
+		baseresp.Status = false
+		baseresp.Error = "This feature is only for HDFC bank"
+		response.JSON(w, http.StatusOK, Models.SyncUpResp{
+			BaseResponse: baseresp, FailedTxns: []string{},
+		})
+		return
+	}
 
 	userId := workflow.VerifyIdToken(accessToken)
 	if userId != "" {
@@ -129,14 +142,14 @@ func SyncMail(w http.ResponseWriter, r *http.Request) {
 		threadservice := srv.Users.Threads.List(user)
 
 		if from != "" && to != "" {
-			query = fmt.Sprintf("label:%v after:%v before:%v", label, from, to)
+			query = fmt.Sprintf("from:%v after:%v before:%v", label, from, to)
 
 		} else {
 			//fetch all
 			//getting the last updated dated from the Db and sync from lastcreated - 2 --> now
 			from = dbConnector.GetLastSyncData(userId)
 			to = time.Now().AddDate(0, 0, 1).Format("2006-01-02")
-			query = fmt.Sprintf("label:%v after:%v before:%v", label, from, to)
+			query = fmt.Sprintf("from:%v after:%v before:%v", label, from, to)
 			//query = fmt.Sprintf("label:%v", label)
 		}
 
@@ -152,6 +165,7 @@ func SyncMail(w http.ResponseWriter, r *http.Request) {
 		for i, f := range decodedData {
 			decodedData[i].ETime = timestampmap[f.TransactionId]
 			decodedData[i].UserId = userId
+			decodedData[i].Bank = bank
 			// to do check the data with fed pocket and mapping by
 
 		}
